@@ -25,7 +25,7 @@ Requirements: macOS on APFS (clonefile), git ≥ 2.31, python3, bash ≥ 3.2. On
 works but falls back to a plain copy and says so.
 
 ```bash
-git clone https://github.com/<you>/cowtree.git ~/.cowtree && ~/.cowtree/install.sh
+git clone https://github.com/paakofiaidoo/cowtree.git ~/.cowtree && ~/.cowtree/install.sh
 ```
 
 `install.sh` symlinks `bin/cowtree` into `~/bin` (or `$PREFIX/bin`) and writes a default
