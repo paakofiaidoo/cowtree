@@ -1,74 +1,143 @@
 #!/usr/bin/env bash
+# cowtree — copy-on-write git worktrees (APFS clonefile). See README.md for every command.
 set -euo pipefail
-
-WT_ROOT="${COWTREE_WT_ROOT:-$HOME/dev/wt}"
+VERSION=0.2.0
+HERE=$(cd "$(dirname "$(readlink "${BASH_SOURCE[0]}" || echo "${BASH_SOURCE[0]}")")/.." && pwd)
+[ -d "$HERE/lib" ] || HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+GLOBAL_CFG="${COWTREE_CONFIG:-${XDG_CONFIG_HOME:-$HOME/.config}/cowtree/config.toml}"
+PROJECT_CFG=cowtree.toml
+WT_CFG=.cowtree.toml
 
 usage() {
   cat <<USAGE
-cowtree add <base-checkout> <topic> [--from <ref>] [--branch <name>] [--dest <path>]
-cowtree rm  <worktree-path> [--force]
-cowtree ls  [<base-checkout>]
+cowtree $VERSION — copy-on-write git worktrees for parallel AI sessions and humans
+
+  cowtree add <base> <topic> [--from <ref>] [--branch <name>] [--dest <path>] [--exclude <dir>]...
+  cowtree rm <worktree> [--force]
+  cowtree ls [<base>] | --all
+  cowtree status [<worktree>]
+  cowtree diff [<worktree>]
+  cowtree dedupe <worktree> | --all [--dry-run]
+  cowtree workspace <base> [--open]
+  cowtree code <worktree>
+  cowtree init [<base>]
+  cowtree config [--global | --project <base> | <worktree>]
+  cowtree config set <key> <value> [--global | --project <base>]
+
+Config precedence: flags > <worktree>/$WT_CFG > <base>/$PROJECT_CFG > $GLOBAL_CFG > defaults.
+Keys: wt_root (default ~/dev/wt), layout (central|sibling|inside), branch_prefix, editor (code), exclude (dirs never cloned).
 USAGE
   exit 1
 }
-
 die() { echo "cowtree: $*" >&2; exit 1; }
+expand() { local v=$1; v=${v/#\~/$HOME}; echo "$v"; }
 
+cfg_get() { # cfg_get <file> <key> -> value or empty
+  [ -f "$1" ] || return 0
+  sed -nE "s/^[[:space:]]*$2[[:space:]]*=[[:space:]]*\"?([^\"#]*)\"?[[:space:]]*(#.*)?$/\1/p" "$1" | tail -1 | sed -E 's/[[:space:]]+$//'
+}
+cfg_get_list() { # exclude = ["a", "b"]
+  [ -f "$1" ] || return 0
+  sed -nE "s/^[[:space:]]*$2[[:space:]]*=[[:space:]]*\[(.*)\].*/\1/p" "$1" | tail -1 | tr ',' '\n' | sed -E 's/[[:space:]"]//g' | grep -v '^$' || true
+}
+cfg_set() { # cfg_set <file> <key> <value>
+  mkdir -p "$(dirname "$1")"; touch "$1"
+  if grep -qE "^[[:space:]]*$2[[:space:]]*=" "$1"; then
+    sed -i '' -E "s|^[[:space:]]*$2[[:space:]]*=.*|$2 = \"$3\"|" "$1"
+  else
+    printf '%s = "%s"\n' "$2" "$3" >> "$1"
+  fi
+}
+resolve() { # resolve <key> <default> [<base>] [<wt>]
+  local v=""
+  [ -n "${4:-}" ] && v=$(cfg_get "$4/$WT_CFG" "$1")
+  [ -z "$v" ] && [ -n "${3:-}" ] && v=$(cfg_get "$3/$PROJECT_CFG" "$1")
+  [ -z "$v" ] && v=$(cfg_get "$GLOBAL_CFG" "$1")
+  [ -z "$v" ] && v=$2
+  expand "$v"
+}
+wt_base() { # base checkout for a worktree: .cowtree.toml link, else git common dir
+  local b; b=$(cfg_get "$1/$WT_CFG" base)
+  [ -n "$b" ] && { expand "$b"; return; }
+  dirname "$(git -C "$1" rev-parse --path-format=absolute --git-common-dir)"
+}
 same_volume() { [ "$(stat -f %d "$1")" = "$(stat -f %d "$2")" ]; }
-
 is_apfs() { [ "$(df -T apfs "$1" 2>/dev/null | wc -l)" -gt 1 ]; }
+human() { awk -v b="$1" 'BEGIN{split("B KB MB GB TB",u," ");i=1;while(b>=1024&&i<5){b/=1024;i++}printf "%.1f%s",b,u[i]}'; }
 
-clone_tree() {
-  local src=$1 dst=$2 mode=$3
-  local entry
+clone_tree() { # clone_tree <src> <dst> cow|copy <excluded names...>
+  local src=$1 dst=$2 mode=$3; shift 3
+  local entry name
   for entry in "$src"/.[!.]* "$src"/..?* "$src"/*; do
     [ -e "$entry" ] || [ -L "$entry" ] || continue
-    [ "$(basename "$entry")" = ".git" ] && continue
-    if [ "$mode" = cow ]; then
-      cp -c -R -P "$entry" "$dst/"
-    else
-      cp -R -P "$entry" "$dst/"
-    fi
+    name=$(basename "$entry")
+    [ "$name" = .git ] && continue
+    case " $* " in *" $name "*) continue ;; esac
+    if [ "$mode" = cow ]; then cp -c -R -P "$entry" "$dst/"; else cp -R -P "$entry" "$dst/"; fi
   done
 }
 
 cmd_add() {
   [ $# -ge 2 ] || usage
-  local base topic ref="" branch="" dest=""
+  local base topic ref="" branch="" dest="" excl=()
   base=$(cd "$1" && pwd -P); topic=$2; shift 2
   while [ $# -gt 0 ]; do
     case $1 in
       --from) ref=$2; shift 2 ;;
       --branch) branch=$2; shift 2 ;;
       --dest) dest=$2; shift 2 ;;
+      --exclude) excl+=("$2"); shift 2 ;;
       *) usage ;;
     esac
   done
   git -C "$base" rev-parse --is-inside-work-tree >/dev/null 2>&1 || die "$base is not a git checkout"
-  [ -z "$(git -C "$base" status --porcelain --untracked-files=no)" ] || die "$base has uncommitted changes; cowtree needs a clean base"
-  local repo; repo=$(basename "$base")
-  [ -n "$dest" ] || dest="$WT_ROOT/$repo-$topic"
-  [ -n "$branch" ] || branch="$topic"
+  [ -z "$(git -C "$base" status --porcelain --untracked-files=no)" ] || die "$base has uncommitted changes; commit or stash them first"
+  local repo wt_root layout prefix
+  repo=$(basename "$base")
+  wt_root=$(resolve wt_root "$HOME/dev/wt" "$base")
+  layout=$(resolve layout central "$base")
+  prefix=$(resolve branch_prefix "" "$base")
+  while read -r e; do [ -n "$e" ] && excl+=("$e"); done < <(cfg_get_list "$base/$PROJECT_CFG" exclude; cfg_get_list "$GLOBAL_CFG" exclude)
+  if [ -z "$dest" ]; then
+    case $layout in
+      central) dest="$wt_root/$repo-$topic" ;;
+      sibling) dest="$(dirname "$base")/$repo-$topic" ;;
+      inside)  dest="$base/.cowtree/wt/$topic" ;;
+      *) die "unknown layout $layout" ;;
+    esac
+  fi
+  [ -n "$branch" ] || branch="$prefix$topic"
   [ -n "$ref" ] || ref=$(git -C "$base" rev-parse --abbrev-ref HEAD)
   [ ! -e "$dest" ] || die "$dest exists"
   mkdir -p "$(dirname "$dest")"
+  [ "$layout" = inside ] && { grep -qx ".cowtree/" "$base/.git/info/exclude" 2>/dev/null || echo ".cowtree/" >> "$(git -C "$base" rev-parse --path-format=absolute --git-common-dir)/info/exclude"; excl+=(.cowtree); }
 
   local mode=cow
   if ! is_apfs "$base" || ! same_volume "$base" "$(dirname "$dest")"; then
-    mode=copy; echo "cowtree: not APFS or different volume; falling back to full copy" >&2
+    mode=copy; echo "cowtree: not APFS or different volume; full copy" >&2
   fi
-
   if git -C "$base" show-ref --verify --quiet "refs/heads/$branch"; then
     git -C "$base" worktree add --no-checkout "$dest" "$branch"
   else
     git -C "$base" worktree add --no-checkout -b "$branch" "$dest" "$ref"
   fi
-  clone_tree "$base" "$dest" "$mode"
+  clone_tree "$base" "$dest" "$mode" "${excl[@]+"${excl[@]}"}"
   # populate the index without touching the clones, then rewrite only files that differ from the ref
   git -C "$dest" read-tree HEAD
   git -C "$dest" update-index -q --refresh || true
   git -C "$dest" diff --name-only -z | xargs -0 -r git -C "$dest" checkout -q --
-  git -C "$dest" ls-files --others --exclude-standard -z | xargs -0 -r rm -f
+  (cd "$dest" && git ls-files --others --exclude-standard -z | xargs -0 -r rm -f)
+  local common; common=$(git -C "$dest" rev-parse --path-format=absolute --git-common-dir)
+  grep -qx "$WT_CFG" "$common/info/exclude" 2>/dev/null || echo "$WT_CFG" >> "$common/info/exclude"
+  cat > "$dest/$WT_CFG" <<TOML
+# written by cowtree $VERSION — links this worktree to its base checkout; not committed
+base = "$base"
+repo = "$repo"
+branch = "$branch"
+from = "$ref"
+mode = "$mode"
+created = "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+TOML
   git -C "$dest" update-index -q --refresh || true
   echo "$dest"
 }
@@ -78,12 +147,10 @@ cmd_rm() {
   local dest force=""
   dest=$(cd "$1" && pwd -P); shift
   [ "${1:-}" = "--force" ] && force="--force"
-  local gitdir branch common
-  gitdir=$(git -C "$dest" rev-parse --git-dir)
-  common=$(git -C "$dest" rev-parse --path-format=absolute --git-common-dir)
+  local branch main
+  main=$(wt_base "$dest")
   branch=$(git -C "$dest" rev-parse --abbrev-ref HEAD)
   git -C "$dest" worktree remove $force "$dest"
-  local main; main=$(dirname "$common")
   if [ "$branch" != HEAD ] && git -C "$main" branch --merged | grep -qx "[ *+]*$branch"; then
     git -C "$main" branch -d "$branch" >/dev/null && echo "deleted merged branch $branch"
   else
@@ -91,15 +158,10 @@ cmd_rm() {
   fi
 }
 
-human() { awk -v b="$1" 'BEGIN{s="B KB MB GB TB";split(s,u," ");i=1;while(b>=1024&&i<5){b/=1024;i++}printf "%.1f%s",b,u[i]}'; }
-
-phys_bytes() {
-  # physical blocks actually allocated; APFS clones that still share blocks with the base are not counted
-  local root=$1 base=$2
-  python3 - "$root" "$base" <<'PY'
-import os, sys, subprocess
+owned_bytes() { # files whose size+mtime differ from the base path (clones keep both)
+  python3 - "$1" "$2" <<'PY'
+import os, sys
 root, base = sys.argv[1], sys.argv[2]
-# count a file as owned by the worktree if its content differs from the base path or base has no such path
 total = 0
 for d, dirs, files in os.walk(root):
     if '.git' in dirs: dirs.remove('.git')
@@ -109,33 +171,133 @@ for d, dirs, files in os.walk(root):
         try: st = os.lstat(p)
         except OSError: continue
         if not os.path.isfile(p) or os.path.islink(p): continue
-        bp = os.path.join(base, rel, f) if rel != '.' else os.path.join(base, f)
+        bp = os.path.join(base, f) if rel == '.' else os.path.join(base, rel, f)
         try:
             bst = os.lstat(bp)
-            if bst.st_size == st.st_size and bst.st_mtime_ns == st.st_mtime_ns:
-                continue
-        except OSError:
-            pass
+            if bst.st_size == st.st_size and bst.st_mtime_ns == st.st_mtime_ns: continue
+        except OSError: pass
         total += st.st_blocks * 512
 print(total)
 PY
 }
 
+all_worktrees() { # every cowtree worktree under wt_root (by .cowtree.toml) plus git-registered ones for <base>
+  local wt_root; wt_root=$(resolve wt_root "$HOME/dev/wt")
+  if [ "${1:-}" = --all ]; then
+    find "$wt_root" -maxdepth 2 -name "$WT_CFG" 2>/dev/null | sed 's|/[^/]*$||' | sort
+  else
+    local base; base=$(cd "${1:-.}" && pwd -P)
+    git -C "$base" worktree list --porcelain | awk '/^worktree /{print $2}' | sed 1d
+  fi
+}
+
 cmd_ls() {
   local base=${1:-.}
-  git -C "$base" worktree list --porcelain | awk '/^worktree /{print $2}' | while read -r wt; do
-    local main; main=$(dirname "$(git -C "$wt" rev-parse --path-format=absolute --git-common-dir)")
-    [ "$wt" = "$main" ] && { echo "$wt  (base)"; continue; }
-    local logical physical
+  [ "$base" = --all ] || { base=$(cd "$base" && pwd -P); echo "$base  (base)"; }
+  all_worktrees "$base" | while read -r wt; do
+    [ -d "$wt" ] || continue
+    local main logical physical
+    main=$(wt_base "$wt")
     logical=$(du -sk "$wt" 2>/dev/null | cut -f1); logical=$((logical*1024))
-    physical=$(phys_bytes "$wt" "$main")
-    printf "%s  logical %s  owned %s\n" "$wt" "$(human "$logical")" "$(human "$physical")"
+    physical=$(owned_bytes "$wt" "$main")
+    printf "%s  [%s]  logical %s  owned %s  base %s\n" "$wt" "$(git -C "$wt" branch --show-current)" "$(human "$logical")" "$(human "$physical")" "$main"
   done
+}
+
+cmd_status() {
+  local wt; wt=$(cd "${1:-.}" && git rev-parse --show-toplevel)
+  local base; base=$(wt_base "$wt")
+  [ "$wt" != "$base" ] || die "$wt is a base checkout, not a worktree"
+  echo "worktree  $wt"; echo "base      $base"
+  echo "branch    $(git -C "$wt" branch --show-current)  (base on $(git -C "$base" branch --show-current))"
+  echo "ahead     $(git -C "$wt" rev-list --count "$(git -C "$base" rev-parse HEAD)..HEAD") commits, behind $(git -C "$wt" rev-list --count "HEAD..$(git -C "$base" rev-parse HEAD)")"
+  echo "changes   $(git -C "$wt" status --porcelain | wc -l | tr -d ' ') uncommitted"
+  echo "owned     $(human "$(owned_bytes "$wt" "$base")")"
+  [ -f "$wt/$WT_CFG" ] && sed -n 's/^created = "\(.*\)"/created   \1/p' "$wt/$WT_CFG"
+}
+
+cmd_diff() {
+  local wt; wt=$(cd "${1:-.}" && git rev-parse --show-toplevel); shift || true
+  git -C "$wt" diff "$(git -C "$(wt_base "$wt")" rev-parse HEAD)" "$@"
+}
+
+cmd_dedupe() {
+  [ $# -ge 1 ] || usage
+  local dry=""; case " $* " in *" --dry-run "*) dry=--dry-run ;; esac
+  local list
+  if [ "$1" = --all ]; then list=$(all_worktrees --all); else list=$(cd "$1" && pwd -P); fi
+  echo "$list" | while read -r wt; do
+    [ -d "$wt" ] || continue
+    is_apfs "$wt" || { echo "$wt: not APFS, skipped"; continue; }
+    printf "%s: " "$wt"; python3 "$HERE/lib/dedupe.py" "$wt" "$(wt_base "$wt")" $dry
+  done
+}
+
+cmd_workspace() {
+  [ $# -ge 1 ] || usage
+  local base; base=$(cd "$1" && pwd -P); shift
+  local repo wt_root out; repo=$(basename "$base"); wt_root=$(resolve wt_root "$HOME/dev/wt" "$base")
+  out="$wt_root/$repo.code-workspace"
+  {
+    echo '{ "folders": ['
+    printf '    { "name": "%s (base)", "path": "%s" }' "$repo" "$base"
+    all_worktrees "$base" | while read -r wt; do printf ',\n    { "name": "%s · %s", "path": "%s" }' "$repo" "$(git -C "$wt" branch --show-current)" "$wt"; done
+    printf '\n  ], "settings": { "git.openRepositoryInParentFolders": "never" } }\n'
+  } > "$out"
+  echo "$out"
+  [ "${1:-}" = --open ] && "$(resolve editor code "$base")" "$out"
+  return 0
+}
+
+cmd_code() { local wt; wt=$(cd "${1:-.}" && pwd -P); "$(resolve editor code "$(wt_base "$wt")" "$wt")" "$wt"; }
+
+cmd_init() {
+  local base; base=$(cd "${1:-.}" && pwd -P)
+  [ ! -f "$base/$PROJECT_CFG" ] || die "$base/$PROJECT_CFG exists"
+  cat > "$base/$PROJECT_CFG" <<TOML
+# cowtree project config (commit it). Values override ~/.config/cowtree/config.toml.
+# wt_root = "~/dev/wt"          # where worktrees go (layout = central)
+# layout = "central"            # central | sibling | inside
+# branch_prefix = ""            # e.g. "feat/"
+# exclude = ["build", ".dart_tool"]   # dirs never cloned into a worktree
+TOML
+  echo "$base/$PROJECT_CFG"
+}
+
+cmd_config() {
+  if [ "${1:-}" = set ]; then
+    [ $# -ge 3 ] || usage
+    local key=$2 val=$3 file=$GLOBAL_CFG
+    [ "${4:-}" = --project ] && file="$(cd "$5" && pwd -P)/$PROJECT_CFG"
+    cfg_set "$file" "$key" "$val"; echo "$file: $key = $val"; return
+  fi
+  local base="" wt=""
+  case ${1:-} in
+    --global|"") ;;
+    --project) base=$(cd "$2" && pwd -P) ;;
+    *) wt=$(cd "$1" && pwd -P); base=$(wt_base "$wt") ;;
+  esac
+  echo "global   $GLOBAL_CFG$( [ -f "$GLOBAL_CFG" ] || echo ' (absent)')"
+  [ -n "$base" ] && echo "project  $base/$PROJECT_CFG$( [ -f "$base/$PROJECT_CFG" ] || echo ' (absent)')"
+  [ -n "$wt" ] && echo "worktree $wt/$WT_CFG"
+  printf "%-14s %s\n" wt_root "$(resolve wt_root "$HOME/dev/wt" "$base" "$wt")"
+  printf "%-14s %s\n" layout "$(resolve layout central "$base" "$wt")"
+  printf "%-14s %s\n" branch_prefix "$(resolve branch_prefix "" "$base" "$wt")"
+  printf "%-14s %s\n" editor "$(resolve editor code "$base" "$wt")"
+  printf "%-14s %s\n" exclude "$( { cfg_get_list "$base/$PROJECT_CFG" exclude; cfg_get_list "$GLOBAL_CFG" exclude; } 2>/dev/null | tr '\n' ' ')"
 }
 
 case ${1:-} in
   add) shift; cmd_add "$@" ;;
   rm) shift; cmd_rm "$@" ;;
   ls) shift; cmd_ls "$@" ;;
+  status) shift; cmd_status "$@" ;;
+  diff) shift; cmd_diff "$@" ;;
+  dedupe) shift; cmd_dedupe "$@" ;;
+  workspace) shift; cmd_workspace "$@" ;;
+  code) shift; cmd_code "$@" ;;
+  init) shift; cmd_init "$@" ;;
+  config) shift; cmd_config "$@" ;;
+  version|--version) echo "$VERSION" ;;
   *) usage ;;
 esac

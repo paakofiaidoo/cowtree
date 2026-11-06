@@ -1,0 +1,10 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  smoke:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash -n bin/cowtree && python3 -m py_compile lib/dedupe.py
+      - run: ./test/smoke.sh
+      - run: ./install.sh && ~/bin/cowtree version
