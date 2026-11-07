@@ -6,6 +6,7 @@ uses cowtree*, the rules are:
 - One session works in one worktree on one branch. Never edit the base checkout; it stays on `main` and clean.
 - To start work on a new branch: `cowtree add <base-checkout> <topic>` and run everything inside the printed path.
 - `cowtree status` tells you your base, branch and how far you are from it; `cowtree diff` shows your full change.
+- `cowtree branches <base>` / `cowtree which <branch>` tell you which worktree a branch lives in before you touch it.
 - Commit and push from the worktree as usual. When the PR is merged: `cowtree rm <worktree>`.
 - Do not commit `.cowtree.toml`; `cowtree.toml` in the project root is shared config and may be committed.
 - Space is not free because the files are clones: a build that rewrites `build/` owns every byte it writes.

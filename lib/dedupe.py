@@ -8,7 +8,9 @@ import ctypes, hashlib, os, subprocess, sys
 
 wt, base = os.path.realpath(sys.argv[1]), os.path.realpath(sys.argv[2])
 dry = "--dry-run" in sys.argv
-libc = ctypes.CDLL("/usr/lib/libSystem.B.dylib", use_errno=True)
+DARWIN = sys.platform == "darwin"
+libc = ctypes.CDLL("/usr/lib/libSystem.B.dylib", use_errno=True) if DARWIN else None
+FICLONE = 0x40049409  # linux: ioctl that shares extents on btrfs/XFS/bcachefs
 
 def git(cwd, *a):
     return subprocess.run(["git", "-C", cwd, *a], check=True, capture_output=True).stdout
@@ -27,11 +29,18 @@ def zset(cwd, *a):
 
 def clone(src, dst):
     tmp = dst + ".cowtree-tmp"
-    if libc.clonefile(src.encode(), tmp.encode(), 0) != 0:
-        e = ctypes.get_errno(); 
-        try: os.unlink(tmp)
-        except OSError: pass
-        raise OSError(e, os.strerror(e), src)
+    if DARWIN:
+        if libc.clonefile(src.encode(), tmp.encode(), 0) != 0:
+            e = ctypes.get_errno()
+            try: os.unlink(tmp)
+            except OSError: pass
+            raise OSError(e, os.strerror(e), src)
+    else:
+        import fcntl
+        with open(src, "rb") as s_, open(tmp, "wb") as d_:
+            try: fcntl.ioctl(d_.fileno(), FICLONE, s_.fileno())
+            except OSError:
+                os.unlink(tmp); raise
     st, ss = os.lstat(dst), os.lstat(src)
     os.chmod(tmp, st.st_mode & 0o7777)
     os.utime(tmp, ns=(ss.st_atime_ns, ss.st_mtime_ns))

@@ -21,8 +21,9 @@ $ cowtree ls ~/code/myapp
 
 ## Install
 
-Requirements: macOS on APFS (clonefile), git ≥ 2.31, python3, bash ≥ 3.2. On other filesystems cowtree still
-works but falls back to a plain copy and says so.
+Requirements: git ≥ 2.31, python3, bash ≥ 3.2, and a filesystem with file cloning: APFS on macOS (clonefile) or
+btrfs / XFS / bcachefs on Linux (reflink, via `cp --reflink` and the `FICLONE` ioctl; written, not yet exercised on
+a Linux box). Elsewhere cowtree still works but falls back to a plain copy and says so.
 
 ```bash
 git clone https://github.com/paakofiaidoo/cowtree.git ~/.cowtree && ~/.cowtree/install.sh
@@ -35,8 +36,12 @@ git clone https://github.com/paakofiaidoo/cowtree.git ~/.cowtree && ~/.cowtree/i
 
 | Command | What it does |
 |---|---|
-| `cowtree add <base> <topic> [--from <ref>] [--branch <name>] [--dest <path>] [--exclude <dir>]...` | Create a worktree of `<base>` at `<wt_root>/<repo>-<topic>` on branch `<topic>` (existing branch reused, new one cut from `--from`, default: the base's current branch). Clones every file and ignored dir except `--exclude`d ones. Prints the path. |
-| `cowtree rm <worktree> [--force]` | Remove the worktree; delete its branch if already merged into the base, keep it otherwise. |
+| `cowtree add <base> <topic> [--from <ref>] [--branch <name>] [--dest <path>] [--exclude <dir>]... [--also <path>]...` | Create a worktree of `<base>` at `<wt_root>/<repo>-<topic>` on branch `<topic>` (existing branch reused, new one cut from `--from`, default: the base's current branch). Clones every file and ignored dir except `--exclude`d ones, plus any `--also` path from outside the checkout. Records `branch.<name>.cowtree = <path>` in the repo's git config. Prints the path. |
+| `cowtree rm <worktree> [--force]` | Remove the worktree and its git link; delete its branch if already merged into `main_branch`, keep it otherwise. |
+| `cowtree adopt <worktree>` | Take over an existing plain `git worktree`: write `.cowtree.toml`, record the branch link in git config, dedupe. |
+| `cowtree sweep [<base>] \| --all [--dry-run]` | Remove every worktree whose branch is merged into `main_branch` (local or `origin/`) and whose tree is completely clean, untracked files included. Anything else is listed and kept. |
+| `cowtree branches [<base>]` | Every local branch of the base and the worktree it is checked out in (`(base)`, a path, or `-`). Flags a branch whose git-config link disagrees with reality. |
+| `cowtree which <branch> [<base>]` | Print the worktree path for a branch. |
 | `cowtree ls [<base>] \| --all` | Worktrees of one base, or every cowtree worktree under `wt_root`, with branch, logical size and bytes actually owned. |
 | `cowtree status [<worktree>]` | Base, branch, ahead/behind the base, uncommitted changes, owned bytes. |
 | `cowtree diff [<worktree>] [git-diff args]` | Diff of the worktree (committed + uncommitted) against the base's HEAD. |
@@ -57,12 +62,30 @@ Three files, most specific wins: flags › `<worktree>/.cowtree.toml` › `<base
 | `layout` | `central` | `central`: `<wt_root>/<repo>-<topic>`. `sibling`: next to the base, `<repo>-<topic>`. `inside`: `<base>/.cowtree/wt/<topic>` (added to the repo's `info/exclude`). |
 | `branch_prefix` | empty | Prepended to `<topic>` for the branch name, e.g. `feat/`. |
 | `editor` | `code` | Used by `code` and `workspace --open`. |
+| `main_branch` | auto | Merge target for `sweep` and `rm` (`origin/HEAD`, else `main`, else `master`). |
 | `exclude` | `[]` | Directory names never cloned into a worktree, e.g. `["build", ".dart_tool"]`. |
 
 `~/.config/cowtree/config.toml` is yours; `cowtree.toml` is committed with the project so every session and
 every human gets the same layout; `.cowtree.toml` is written by `add` into each worktree and links it back to its
 base (`base`, `repo`, `branch`, `from`, `created`). It is excluded from git via `info/exclude`, never committed,
 and is what `status`, `diff`, `ls` and `dedupe` use to find the base. Override the global file with `COWTREE_CONFIG`.
+
+## Which branch is in which worktree
+
+cowtree records the link in git itself, so it survives without cowtree and shows up in any tool that reads git config:
+
+```
+$ cowtree branches ~/code/myapp
+main                                     (base)
+payments-retry                           /Users/me/code/wt/myapp-payments-retry
+old-spike                                -
+$ cowtree which payments-retry ~/code/myapp
+/Users/me/code/wt/myapp-payments-retry
+$ git -C ~/code/myapp config --get-regexp 'branch\..*\.cowtree'
+branch.payments-retry.cowtree /Users/me/code/wt/myapp-payments-retry
+```
+
+`git worktree list` remains the source of truth; `branches` flags any link that disagrees with it.
 
 ## Working with AI sessions
 
