@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # cowtree — copy-on-write git worktrees (APFS clonefile). See README.md for every command.
 set -euo pipefail
-VERSION=0.4.0
+VERSION=0.4.1
 HERE=$(cd "$(dirname "$(readlink "${BASH_SOURCE[0]}" || echo "${BASH_SOURCE[0]}")")/.." && pwd)
 [ -d "$HERE/lib" ] || HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 GLOBAL_CFG="${COWTREE_CONFIG:-${XDG_CONFIG_HOME:-$HOME/.config}/cowtree/config.toml}"
@@ -192,6 +192,7 @@ cmd_rm() {
   main=$(wt_base "$dest")
   branch=$(git -C "$dest" rev-parse --abbrev-ref HEAD)
   git -C "$dest" worktree remove $force "$dest"
+  [ -d "$dest" ] && find "$dest" -name .DS_Store -delete 2>/dev/null && rmdir "$dest" 2>/dev/null || true
   [ "$branch" != HEAD ] && link_unset "$main" "$branch"
   if [ "$branch" != HEAD ] && git -C "$main" branch --merged "$(main_branch "$main")" | grep -qx "[ *+]*$branch"; then
     git -C "$main" branch -d "$branch" >/dev/null && echo "deleted merged branch $branch"
@@ -328,8 +329,14 @@ cmd_sweep() { # remove worktrees whose branch is merged into main and whose tree
     base=$(wt_base "$wt"); br=$(git -C "$wt" branch --show-current); m=$(main_branch "$base")
     [ -n "$br" ] || { echo "skip $wt (detached)"; continue; }
     [ -z "$(git -C "$wt" status --porcelain)" ] || { echo "skip $wt (not clean)"; continue; }
+    local how=""
     if git -C "$base" branch --merged "$m" | grep -qx "[ *+]*$br" || { git -C "$base" show-ref --verify --quiet "refs/remotes/origin/$m" && git -C "$base" branch --merged "origin/$m" | grep -qx "[ *+]*$br"; }; then
-      if [ -n "$dry" ]; then echo "would remove $wt [$br merged into $m]"; else cmd_rm "$wt" >/dev/null && echo "removed $wt [$br]"; fi
+      how="merged into $m"
+    elif command -v gh >/dev/null 2>&1 && [ "$(cd "$base" && gh pr view "$br" --json state,headRefOid -q 'select(.state=="MERGED") | .headRefOid' 2>/dev/null)" = "$(git -C "$wt" rev-parse HEAD)" ]; then
+      how="PR merged (squash/rebase), head matches"
+    fi
+    if [ -n "$how" ]; then
+      if [ -n "$dry" ]; then echo "would remove $wt [$br $how]"; else cmd_rm "$wt" --force >/dev/null 2>&1 || cmd_rm "$wt" >/dev/null; git -C "$base" branch -D "$br" >/dev/null 2>&1 || true; echo "removed $wt [$br $how]"; fi
     else
       echo "keep $wt [$br not merged into $m]"
     fi

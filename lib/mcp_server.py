@@ -64,7 +64,7 @@ def main():
         except ValueError: continue
         m, id_, p = req.get("method"), req.get("id"), req.get("params") or {}
         if m == "initialize":
-            reply(id_, {"protocolVersion": PROTOCOL, "capabilities": {"tools": {}}, "serverInfo": {"name": "cowtree", "version": "0.4.0"}})
+            reply(id_, {"protocolVersion": PROTOCOL, "capabilities": {"tools": {}}, "serverInfo": {"name": "cowtree", "version": "0.4.1"}})
         elif m == "tools/list":
             reply(id_, {"tools": [{"name": n, **t} for n, t in TOOLS.items()]})
         elif m == "tools/call":

@@ -1,8 +1,8 @@
 {
   "name": "cowtree",
   "owner": { "name": "Paa Kofi Aidoo", "url": "https://github.com/paakofiaidoo" },
-  "metadata": { "description": "Copy-on-write git worktrees for parallel AI coding sessions", "version": "0.4.0" },
+  "metadata": { "description": "Copy-on-write git worktrees for parallel AI coding sessions", "version": "0.4.1" },
   "plugins": [
-    { "name": "cowtree", "source": "./", "description": "cowtree skill, /cowtree commands and MCP server", "version": "0.4.0", "category": "development" }
+    { "name": "cowtree", "source": "./", "description": "cowtree skill, /cowtree commands and MCP server", "version": "0.4.1", "category": "development" }
   ]
 }

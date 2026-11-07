@@ -78,5 +78,5 @@ for rel in zset(wt, "ls-files", "--others", "--ignored", "--exclude-standard", "
     except OSError:
         continue
     if sha(src) == sha(dst): take(rel)
-if not dry: git(wt, "update-index", "-q", "--refresh")
+if not dry: subprocess.run(["git", "-C", wt, "update-index", "-q", "--refresh"], capture_output=True)  # exits 1 when the tree has edits
 print(f"{'would clone' if dry else 'cloned'} {files} files ({tracked} tracked, {files-tracked} ignored), {blocks/1048576:.1f}MB previously owned")

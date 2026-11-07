@@ -1,6 +1,6 @@
 {
   "name": "cowtree",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Copy-on-write git worktrees: one worktree per branch/session at near-zero disk cost. Adds the cowtree skill, /cowtree slash commands and an MCP server.",
   "author": { "name": "Paa Kofi Aidoo", "url": "https://github.com/paakofiaidoo" },
   "homepage": "https://github.com/paakofiaidoo/cowtree",
