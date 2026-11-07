@@ -54,7 +54,7 @@ git clone https://github.com/paakofiaidoo/cowtree.git ~/.cowtree && ~/.cowtree/i
 
 ## Configuration
 
-Three files, most specific wins: flags › `<worktree>/.cowtree.toml` › `<base>/cowtree.toml` › `~/.config/cowtree/config.toml` › defaults.
+Most specific wins: flags › `COWTREE_<KEY>` environment variables (`COWTREE_WT_ROOT`, `COWTREE_LAYOUT`, …) › `<worktree>/.cowtree.toml` › `<base>/cowtree.toml` › `~/.config/cowtree/config.toml` › defaults.
 
 | Key | Default | Meaning |
 |---|---|---|

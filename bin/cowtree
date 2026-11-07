@@ -28,7 +28,7 @@ cowtree $VERSION — copy-on-write git worktrees for parallel AI sessions and hu
   cowtree config [--global | --project <base> | <worktree>]
   cowtree config set <key> <value> [--global | --project <base>]
 
-Config precedence: flags > <worktree>/$WT_CFG > <base>/$PROJECT_CFG > $GLOBAL_CFG > defaults.
+Config precedence: flags > COWTREE_<KEY> env > <worktree>/$WT_CFG > <base>/$PROJECT_CFG > $GLOBAL_CFG > defaults.
 Keys: wt_root (default ~/dev/wt), layout (central|sibling|inside), branch_prefix, editor (code), exclude (dirs never cloned),
       main_branch (merge target for sweep/rm; default: origin HEAD, else main).
 The branch<->worktree link is also stored in git: \`git config --get-regexp 'branch\..*\.cowtree'\` in the base.
@@ -54,8 +54,9 @@ cfg_set() { # cfg_set <file> <key> <value>
     printf '%s = "%s"\n' "$2" "$3" >> "$1"
   fi
 }
-resolve() { # resolve <key> <default> [<base>] [<wt>]
-  local v=""
+resolve() { # resolve <key> <default> [<base>] [<wt>]; COWTREE_<KEY> env wins over every file
+  local v="" envk; envk="COWTREE_$(echo "$1" | tr '[:lower:]' '[:upper:]')"
+  v=$(eval "echo \"\${$envk:-}\"")
   [ -n "${4:-}" ] && v=$(cfg_get "$4/$WT_CFG" "$1")
   [ -z "$v" ] && [ -n "${3:-}" ] && v=$(cfg_get "$3/$PROJECT_CFG" "$1")
   [ -z "$v" ] && v=$(cfg_get "$GLOBAL_CFG" "$1")
