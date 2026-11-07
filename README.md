@@ -1,5 +1,9 @@
 # cowtree
 
+[![ci](https://github.com/paakofiaidoo/cowtree/actions/workflows/ci.yml/badge.svg)](https://github.com/paakofiaidoo/cowtree/actions/workflows/ci.yml)
+[![release](https://img.shields.io/github/v/release/paakofiaidoo/cowtree)](https://github.com/paakofiaidoo/cowtree/releases)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 **Copy-on-write git worktrees.** One checkout per repo, as many parallel worktrees as you need, each costing
 disk only for the files it changes. Built for AI coding sessions (Claude Code, Codex, Cursor, aider) that want
 to work on several branches or PRs of the same repository at the same time, and just as usable by humans in
@@ -26,11 +30,35 @@ btrfs / XFS / bcachefs on Linux (reflink, via `cp --reflink` and the `FICLONE` i
 a Linux box). Elsewhere cowtree still works but falls back to a plain copy and says so.
 
 ```bash
-git clone https://github.com/paakofiaidoo/cowtree.git ~/.cowtree && ~/.cowtree/install.sh
+curl -fsSL https://raw.githubusercontent.com/paakofiaidoo/cowtree/main/install.sh | bash
 ```
 
-`install.sh` symlinks `bin/cowtree` into `~/bin` (or `$PREFIX/bin`) and writes a default
-`~/.config/cowtree/config.toml`. Or run it from the clone: `./bin/cowtree`.
+or `brew install paakofiaidoo/tap/cowtree`, or clone and run `./install.sh`. The installer puts `cowtree` in
+`~/bin` (`PREFIX` to change), writes `~/.config/cowtree/config.toml`, and wires up any coding agents it finds
+(set `COWTREE_AGENTS=0` to skip that step).
+
+## Use it from Claude Code, Codex, Cursor or any agent
+
+```bash
+cowtree agent-install                   # Claude Code skill + /cowtree-* commands + MCP server, Codex AGENTS.md
+cowtree agent-install --project .       # add the cowtree rules to this repo's CLAUDE.md/AGENTS.md and .cursor/rules
+```
+
+- **Claude Code**: the repo is a plugin. `/plugin marketplace add paakofiaidoo/cowtree` then `/plugin install cowtree`,
+  or `cowtree agent-install claude`, which links the skill into `~/.claude/skills`, the slash commands
+  `/cowtree-add`, `/cowtree-status`, `/cowtree-sweep` into `~/.claude/commands`, and registers the MCP server.
+- **MCP** (any MCP client: Codex, Cursor, Windsurf, Zed, Cline): `python3 <cowtree>/lib/mcp_server.py` over stdio,
+  standard library only. Tools: `cowtree_add`, `cowtree_rm`, `cowtree_ls`, `cowtree_status`, `cowtree_diff`,
+  `cowtree_branches`, `cowtree_which`, `cowtree_adopt`, `cowtree_sweep`, `cowtree_config`.
+  ```json
+  { "mcpServers": { "cowtree": { "command": "python3", "args": ["/Users/me/.cowtree/lib/mcp_server.py"] } } }
+  ```
+- **Codex / anything that reads AGENTS.md**: `cowtree agent-install codex` appends the rules to `~/.codex/AGENTS.md`;
+  `--project <path>` appends them to that repo's `AGENTS.md` (and `CLAUDE.md` if present).
+- **Cursor**: `cowtree agent-install cursor --project <path>` writes `.cursor/rules/cowtree.mdc`.
+
+The rules an agent gets are short: one task = one worktree = one branch, start with `cowtree add`, find branches
+with `cowtree which`/`branches`, finish with `cowtree rm`, never plain `git worktree add`.
 
 ## Commands
 
@@ -51,6 +79,7 @@ git clone https://github.com/paakofiaidoo/cowtree.git ~/.cowtree && ~/.cowtree/i
 | `cowtree init [<base>]` | Write a commented `cowtree.toml` into the project. |
 | `cowtree config [--global \| --project <base> \| <worktree>]` | Show the resolved configuration and where each file lives. |
 | `cowtree config set <key> <value> [--project <base>]` | Set a key in the global (default) or project config. |
+| `cowtree agent-install [claude\|codex\|cursor\|all] [--project <path>]` | Wire cowtree into coding agents: skill, slash commands and MCP server for Claude Code, `AGENTS.md` for Codex, `.cursor/rules` for Cursor, or a project's own `CLAUDE.md`/`AGENTS.md`. |
 
 ## Configuration
 
@@ -115,7 +144,8 @@ from the same path in the base. For a true number use `df` before and after.
 ## Development
 
 ```bash
-./test/smoke.sh     # end-to-end on a temp repo: clone cost, divergence, dedupe, rm
+./test/smoke.sh     # end-to-end on a temp repo: clone cost, divergence, dedupe, sweep, rm
+./test/mcp.sh       # MCP server handshake, tools/list and a tool call
 ```
 
 See `CONTRIBUTING.md`. Licensed under the MIT License.

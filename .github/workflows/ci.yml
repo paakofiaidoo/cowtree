@@ -7,4 +7,6 @@ jobs:
       - uses: actions/checkout@v4
       - run: bash -n bin/cowtree && python3 -m py_compile lib/dedupe.py
       - run: ./test/smoke.sh
-      - run: ./install.sh && ~/bin/cowtree version
+      - run: ./test/mcp.sh
+      - run: python3 -c "import json; json.load(open('.claude-plugin/plugin.json')); json.load(open('.claude-plugin/marketplace.json'))"
+      - run: COWTREE_AGENTS=0 ./install.sh && ~/bin/cowtree version && ~/bin/cowtree agent-install codex && grep -q cowtree ~/.codex/AGENTS.md

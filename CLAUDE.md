@@ -11,6 +11,9 @@ uses cowtree*, the rules are:
 - Do not commit `.cowtree.toml`; `cowtree.toml` in the project root is shared config and may be committed.
 - Space is not free because the files are clones: a build that rewrites `build/` owns every byte it writes.
 
+The repo is also a Claude Code plugin (`.claude-plugin/`, `skills/cowtree`, `commands/`, `lib/mcp_server.py`);
+`cowtree agent-install` wires it into Claude Code, Codex and Cursor.
+
 If you are changing cowtree itself: keep `bin/cowtree` bash 3.2 compatible (macOS default), keep `lib/dedupe.py`
-standard-library only, run `./test/smoke.sh` before you open a PR, and document every new command and key in
+standard-library only, run `./test/smoke.sh` and `./test/mcp.sh` before you open a PR, and document every new command and key in
 `README.md`.

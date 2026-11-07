@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # cowtree — copy-on-write git worktrees (APFS clonefile). See README.md for every command.
 set -euo pipefail
-VERSION=0.3.0
+VERSION=0.4.0
 HERE=$(cd "$(dirname "$(readlink "${BASH_SOURCE[0]}" || echo "${BASH_SOURCE[0]}")")/.." && pwd)
 [ -d "$HERE/lib" ] || HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 GLOBAL_CFG="${COWTREE_CONFIG:-${XDG_CONFIG_HOME:-$HOME/.config}/cowtree/config.toml}"
@@ -27,6 +27,7 @@ cowtree $VERSION — copy-on-write git worktrees for parallel AI sessions and hu
   cowtree init [<base>]
   cowtree config [--global | --project <base> | <worktree>]
   cowtree config set <key> <value> [--global | --project <base>]
+  cowtree agent-install [claude|codex|cursor|all] [--project <path>]   # teach a coding agent to use cowtree
 
 Config precedence: flags > COWTREE_<KEY> env > <worktree>/$WT_CFG > <base>/$PROJECT_CFG > $GLOBAL_CFG > defaults.
 Keys: wt_root (default ~/dev/wt), layout (central|sibling|inside), branch_prefix, editor (code), exclude (dirs never cloned),
@@ -390,7 +391,51 @@ cmd_config() {
   printf "%-14s %s\n" exclude "$( { cfg_get_list "$base/$PROJECT_CFG" exclude; cfg_get_list "$GLOBAL_CFG" exclude; } 2>/dev/null | tr '\n' ' ')"
 }
 
+AGENT_SNIPPET='## cowtree (git worktrees)
+This repository uses cowtree for worktrees. One task = one worktree = one branch; the base checkout stays on its
+main branch and is never edited directly. Start work with `cowtree add <base> <topic>` and work inside the printed
+path; `cowtree which <branch> <base>` / `cowtree branches <base>` show where a branch is checked out; after the PR
+merges run `cowtree rm <worktree>`. Never run plain `git worktree add`. Full reference: `cowtree --help`.'
+
+append_snippet() { # append_snippet <file>
+  mkdir -p "$(dirname "$1")"
+  grep -q "^## cowtree (git worktrees)" "$1" 2>/dev/null && { echo "already in $1"; return; }
+  { [ -s "$1" ] && printf "\n"; printf "%s\n" "$AGENT_SNIPPET"; } >> "$1"; echo "updated $1"
+}
+
+cmd_agent_install() {
+  local which=all project=""
+  while [ $# -gt 0 ]; do
+    case $1 in
+      --project) project=$(cd "$2" && pwd -P); shift 2 ;;
+      claude|codex|cursor|all) which=$1; shift ;;
+      *) usage ;;
+    esac
+  done
+  if [ -n "$project" ]; then
+    local f="$project/AGENTS.md"; [ -f "$project/CLAUDE.md" ] && f="$project/CLAUDE.md"
+    append_snippet "$f"
+    [ -f "$project/AGENTS.md" ] || [ "$f" = "$project/AGENTS.md" ] || append_snippet "$project/AGENTS.md"
+    [ "$which" = cursor ] || [ "$which" = all ] && { mkdir -p "$project/.cursor/rules"; printf -- "---\ndescription: cowtree worktree rules\nalwaysApply: true\n---\n%s\n" "$AGENT_SNIPPET" > "$project/.cursor/rules/cowtree.mdc"; echo "wrote $project/.cursor/rules/cowtree.mdc"; }
+    return
+  fi
+  if [ "$which" = claude ] || [ "$which" = all ]; then
+    mkdir -p "$HOME/.claude/skills" "$HOME/.claude/commands"
+    ln -sfn "$HERE/skills/cowtree" "$HOME/.claude/skills/cowtree"; echo "linked ~/.claude/skills/cowtree"
+    local c; for c in "$HERE"/commands/*.md; do ln -sfn "$c" "$HOME/.claude/commands/$(basename "$c")"; done; echo "linked ~/.claude/commands/cowtree-*.md"
+    if command -v claude >/dev/null 2>&1; then
+      claude mcp add --scope user cowtree -- python3 "$HERE/lib/mcp_server.py" >/dev/null 2>&1 && echo "registered MCP server 'cowtree' (user scope)" || echo "MCP: claude mcp add --scope user cowtree -- python3 $HERE/lib/mcp_server.py"
+    else
+      echo "claude CLI not found; MCP: claude mcp add --scope user cowtree -- python3 $HERE/lib/mcp_server.py"
+    fi
+    append_snippet "$HOME/.claude/CLAUDE.md"
+  fi
+  if [ "$which" = codex ] || [ "$which" = all ]; then append_snippet "$HOME/.codex/AGENTS.md"; fi
+  if [ "$which" = cursor ] || [ "$which" = all ]; then echo "cursor: rules are per project; run: cowtree agent-install cursor --project <path>"; fi
+}
+
 case ${1:-} in
+  agent-install) shift; cmd_agent_install "$@" ;;
   add) shift; cmd_add "$@" ;;
   rm) shift; cmd_rm "$@" ;;
   adopt) shift; cmd_adopt "$@" ;;

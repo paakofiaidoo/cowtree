@@ -1,0 +1,15 @@
+{
+  "name": "cowtree",
+  "version": "0.4.0",
+  "description": "Copy-on-write git worktrees: one worktree per branch/session at near-zero disk cost. Adds the cowtree skill, /cowtree slash commands and an MCP server.",
+  "author": { "name": "Paa Kofi Aidoo", "url": "https://github.com/paakofiaidoo" },
+  "homepage": "https://github.com/paakofiaidoo/cowtree",
+  "repository": "https://github.com/paakofiaidoo/cowtree",
+  "license": "MIT",
+  "keywords": ["git", "worktree", "apfs", "ai-agents", "parallel-sessions"],
+  "skills": ["./skills/cowtree"],
+  "commands": ["./commands"],
+  "mcpServers": {
+    "cowtree": { "command": "python3", "args": ["${CLAUDE_PLUGIN_ROOT}/lib/mcp_server.py"] }
+  }
+}
