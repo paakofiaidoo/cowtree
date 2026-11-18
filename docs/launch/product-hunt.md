@@ -11,7 +11,7 @@ rather than rank alone.
 | Field | Value |
 |---|---|
 | Name | `cowtree` |
-| Tagline (53/60) | `Git worktrees that cost no disk until you edit a file` |
+| Tagline (56/60) | `A separate workspace for every AI agent, at no disk cost` |
 | Link | `https://paakofiaidoo.github.io/cowtree/` |
 | GitHub | `https://github.com/paakofiaidoo/cowtree` |
 | Pricing | Free (open source, MIT) |
@@ -19,9 +19,9 @@ rather than rank alone.
 | Thumbnail (240×240) | `docs/launch/gallery/thumbnail.png` |
 | Shoutouts | Claude Code, Git, Homebrew |
 
-**Description (237/260)**
+**Description (257/260)**
 
-> Git worktrees made of APFS clonefile copies of your checkout, node_modules included. Run many Claude Code, Codex or Cursor sessions on one repo at near-zero disk cost; clear resets build files to the base. CLI, Homebrew, MCP server. MIT.
+> Running several AI coding agents on one project? They overwrite each other's files, or each needs a full copy of your code. cowtree gives every agent its own instant copy that uses almost no disk. Works with Claude Code, Codex and Cursor. Free, open source.
 
 ## Gallery (1270×760, in this order)
 
