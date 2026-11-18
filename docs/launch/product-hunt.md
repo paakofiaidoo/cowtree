@@ -3,8 +3,8 @@
 Everything to paste into the Product Hunt submission form, plus the plan around launch day. Submitting is done by the
 maker from their own Product Hunt account; nothing here has been posted.
 
-Assumptions (change them freely): self-hunted, launch on **Tuesday 2026-12-15 at 00:01 PST** (four weeks of preparation
-from 2026-11-18), small existing audience, goal is GitHub stars and installs rather than ranking alone.
+Launch: **Wednesday 2026-11-18 at 00:01 PST (08:01 UTC)**, self-hunted, set by the maker. Goal: GitHub stars and installs
+rather than rank alone.
 
 ## Form fields
 
@@ -59,19 +59,12 @@ Post this the minute the launch goes live.
 
 ## Launch-day checklist
 
-**Four to two weeks before (from 2026-11-18)**
-- [ ] Product Hunt account active: upvote and comment on 2–3 dev-tool launches a week until launch day.
-- [ ] Schedule the post as "Coming soon" with the gallery and the link above.
-- [ ] Support list: people who starred the repo, Claude Code and Codex users you know, git/dev-tool communities you're in. Target 100+ names in a sheet with how you'll reach each.
-- [ ] Watch the Pages site in Search Console (add the property, submit `sitemap.xml`).
+**Before 00:01 PST**
+- [ ] Run through the install paths once: `brew install paakofiaidoo/tap/cowtree`, the curl installer, `/plugin install cowtree`.
+- [ ] Have the X thread and LinkedIn post from `docs/ANNOUNCE.md` ready with the Product Hunt link.
+- [ ] A short personal note to people who would genuinely want the tool: what it is and that it is live today; no ask to upvote (vote requests break Product Hunt's rules).
 
-**Last week**
-- [ ] Cut a release if `main` has moved since 0.5.0, and check the tap formula installs on a clean Mac.
-- [ ] Run through the README install paths: brew, curl installer, `/plugin install cowtree`.
-- [ ] Pre-write the X thread and LinkedIn post from `docs/ANNOUNCE.md`, with the Product Hunt link placeholder.
-- [ ] Send each person on the support list a personal note the day before: what it is, the date, no ask to upvote (vote requests break Product Hunt's rules); ask them to look and leave honest feedback.
-
-**Launch day (Tuesday 2026-12-15, times in PST)**
+**Launch day (Wednesday 2026-11-18, times in PST)**
 - [ ] 00:01: launch goes live; post the maker comment above.
 - [ ] 00:05: post the X thread and the LinkedIn post with the Product Hunt link; add the link to the README and the site's hero for the day.
 - [ ] 00:15–04:00: message the support list one by one; reply to every comment within minutes.
@@ -84,6 +77,10 @@ Post this the minute the launch goes live.
 - [ ] Add the Product Hunt badge to the site and README if it places.
 - [ ] Same week: DevHunt (devhunt.org), Peerlist, Indie Hackers. Following week: AlternativeTo (as an alternative to `git worktree`), SaaSHub, Console.dev newsletter submission.
 - [ ] Turn launch-day questions into README FAQ entries and issues.
+- [ ] Add the Pages property to Google Search Console and submit `sitemap.xml`.
+
+**Numbers**: visits, countries and referrers for the site are at https://cowtree.goatcounter.com (the maker's login; the
+site counts with GoatCounter, no cookies). The repository's own views, clones and referrers are under GitHub Insights > Traffic.
 
 ## Don'ts
 - No "please upvote" in any message or post, no vote exchanges, no new accounts asked to vote.
