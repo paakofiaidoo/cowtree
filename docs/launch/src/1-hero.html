@@ -1,0 +1,9 @@
+<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="base.css"><body><div style="display:flex;justify-content:space-between;align-items:center"><div class="mark"><svg width="30" height="30" viewBox="0 0 22 22"><rect x="1" y="1" width="9" height="9" fill="#16181a"/><rect x="13" y="2" width="7" height="7" fill="none" stroke="#16181a" stroke-width="2"/><rect x="2" y="13" width="7" height="7" fill="none" stroke="#16181a" stroke-width="2"/><rect x="12" y="12" width="9" height="9" fill="#2f6b3a"/></svg> cowtree</div><span class="cmd">brew install paakofiaidoo/tap/cowtree</span></div>
+<h1 style="margin-top:52px;font-size:60px;max-width:15em">Git worktrees that cost no disk until you edit a file.</h1>
+<p class="muted" style="margin-top:18px;font-size:23px">Run five Claude Code, Codex or Cursor sessions on one repo, one branch each, without five copies of it.</p>
+<pre class="term" style="margin-top:40px;font-size:16px"><span class="p">$</span> <span class="c">cowtree ls ~/code/myapp</span>
+~/code/myapp  (base)
+~/code/wt/myapp-fix-login  [fix-login]  logical 301.0MB  <span class="g">owned 8.0KB</span>  base ~/code/myapp
+~/code/wt/myapp-payments-retry  [payments-retry]  logical 301.0MB  <span class="g">owned 12.0KB</span>  base ~/code/myapp
+~/code/wt/myapp-search-index  [search-index]  logical 301.0MB  <span class="g">owned 8.0KB</span>  base ~/code/myapp</pre>
+<div class="foot"><span>paakofiaidoo.github.io/cowtree</span><span>MIT licensed. macOS APFS, Linux reflink.</span></div>

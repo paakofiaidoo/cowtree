@@ -1,0 +1,19 @@
+<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="base.css"><body><h2>Three worktrees of a 311 MB checkout. Free space: unchanged.</h2>
+<pre class="term" style="margin-top:32px;font-size:16px"><span class="p">$</span> <span class="c">du -sh myapp</span>
+311M	myapp
+<span class="p">$</span> <span class="c">df -k / | tail -1</span>
+/dev/disk3s3s1   482797652  12340988  <span class="g">72444800</span>    15%  458732 724448000    0%   /
+<span class="p">$</span> <span class="c">cowtree add ~/code/myapp payments-retry</span>
+~/code/wt/myapp-payments-retry
+<span class="p">$</span> <span class="c">cowtree add ~/code/myapp search-index</span>
+~/code/wt/myapp-search-index
+<span class="p">$</span> <span class="c">cowtree add ~/code/myapp fix-login</span>
+~/code/wt/myapp-fix-login
+<span class="p">$</span> <span class="c">df -k / | tail -1</span>
+/dev/disk3s3s1   482797652  12340988  <span class="g">72448284</span>    15%  458732 724482840    0%   /
+<span class="p">$</span> <span class="c">echo '// retry' >> wt/myapp-payments-retry/app/page.tsx</span>
+<span class="p">$</span> <span class="c">cowtree status wt/myapp-payments-retry</span>
+branch    payments-retry  (base on main)
+changes   1 uncommitted
+owned     <span class="g">12.0KB</span></pre>
+<div class="foot"><span>paakofiaidoo.github.io/cowtree</span><span>MIT licensed. macOS APFS, Linux reflink.</span></div>

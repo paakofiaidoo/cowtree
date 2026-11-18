@@ -1,0 +1,13 @@
+*{box-sizing:border-box;margin:0}
+html,body{width:100%;height:100%}
+body{background:#fff;color:#16181a;font:20px/1.5 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;padding:64px 72px;display:flex;flex-direction:column}
+code,pre{font-family:ui-monospace,"SF Mono",Menlo,monospace}
+.mark{display:flex;align-items:center;gap:14px;font-weight:650;font-size:28px}
+h1{font-size:54px;line-height:1.06;letter-spacing:-.02em;font-weight:700}
+h2{font-size:44px;line-height:1.1;letter-spacing:-.015em;font-weight:700}
+.muted{color:#5d6461}
+.term{background:#1b1d1c;color:#e6e8e3;padding:26px 30px;font-size:19px;line-height:1.6;white-space:pre}
+.term .p{color:#8d958f}.term .c{color:#fff}.term .g{color:#8fc79a}
+.cmd{border:2px solid #16181a;padding:14px 18px;font-size:22px;display:inline-block}
+.cmd::before{content:"$ ";color:#5d6461}
+.foot{margin-top:auto;display:flex;justify-content:space-between;font-size:18px;color:#5d6461;border-top:1px solid #d9dcd6;padding-top:18px}

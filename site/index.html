@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cowtree — copy-on-write git worktrees for parallel AI coding sessions</title>
+<meta name="description" content="cowtree makes git worktrees out of APFS clonefile copies of your checkout, node_modules included. Run many Claude Code, Codex or Cursor sessions on one repo at near-zero disk cost.">
+<link rel="canonical" href="https://paakofiaidoo.github.io/cowtree/">
+<meta name="theme-color" content="#ffffff">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="cowtree">
+<meta property="og:title" content="cowtree — copy-on-write git worktrees">
+<meta property="og:description" content="One checkout, as many worktrees as you have sessions. Each costs disk only for the files it changes. CLI, Homebrew, Claude Code plugin and MCP server. MIT.">
+<meta property="og:url" content="https://paakofiaidoo.github.io/cowtree/">
+<meta property="og:image" content="https://paakofiaidoo.github.io/cowtree/img/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="cowtree ls output: three worktrees of a 301 MB checkout, each owning a few kilobytes">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="cowtree — copy-on-write git worktrees">
+<meta name="twitter:description" content="Run many AI coding sessions on one repo without a full checkout each. APFS clonefile worktrees, node_modules included. MIT.">
+<meta name="twitter:image" content="https://paakofiaidoo.github.io/cowtree/img/og.png">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "cowtree",
+  "description": "Copy-on-write git worktrees for parallel AI coding sessions and humans, built on APFS clonefile (reflink on btrfs/XFS).",
+  "url": "https://paakofiaidoo.github.io/cowtree/",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "macOS, Linux",
+  "softwareVersion": "0.4.1",
+  "license": "https://opensource.org/licenses/MIT",
+  "downloadUrl": "https://github.com/paakofiaidoo/cowtree/releases",
+  "installUrl": "https://github.com/paakofiaidoo/cowtree#install",
+  "codeRepository": "https://github.com/paakofiaidoo/cowtree",
+  "image": "https://paakofiaidoo.github.io/cowtree/img/og.png",
+  "author": { "@type": "Person", "name": "Paa Kofi Aidoo", "url": "https://github.com/paakofiaidoo" },
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+}
+</script>
+<style>
+:root{--ink:#16181a;--muted:#5d6461;--rule:#d9dcd6;--paper:#ffffff;--well:#f3f4f1;--moss:#2f6b3a;--moss-ink:#1f4a27;--written:#b5462b;--term:#1b1d1c;--term-ink:#e6e8e3;--term-dim:#8d958f;--term-moss:#8fc79a}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
+a{color:var(--moss);text-underline-offset:3px}
+a:hover{color:var(--moss-ink)}
+:focus-visible{outline:2px solid var(--moss);outline-offset:2px}
+code,pre,kbd,.mono{font-family:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;font-size:.88em}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+.hero-top>*,.two>*,.cmds>*{min-width:0}
+.cmds article.wide{grid-column:1/-1}
+header.top{border-bottom:1px solid var(--rule)}
+header.top .wrap{display:flex;align-items:center;justify-content:space-between;height:60px}
+.mark{display:flex;align-items:center;gap:10px;font-weight:650;color:var(--ink);text-decoration:none;font-size:18px}
+.mark svg{display:block}
+nav.top{display:flex;gap:22px;font-size:15px}
+nav.top a{color:var(--ink);text-decoration:none}
+nav.top a:hover{color:var(--moss)}
+.hero{padding:72px 0 64px}
+.hero-top{display:grid;grid-template-columns:1.25fr 1fr;gap:48px;align-items:end;margin-bottom:40px}
+.hero-top .lede{margin-bottom:0}
+h1{font-size:52px;line-height:1.08;letter-spacing:-.02em;margin:0 0 20px;font-weight:700}
+.lede{font-size:19px;color:var(--muted);margin:0 0 28px;max-width:34em}
+.cmd{display:flex;align-items:stretch;border:1px solid var(--ink);margin:0 0 10px;background:var(--paper)}
+.cmd code{flex:1;min-width:0;padding:12px 14px;font-size:14px;white-space:nowrap;overflow-x:auto}
+.cmd code::before{content:"$ ";color:var(--muted)}
+.cmd button{border:0;border-left:1px solid var(--ink);background:var(--ink);color:#fff;font:inherit;font-size:14px;padding:0 16px;cursor:pointer}
+.cmd button:hover{background:var(--moss);}
+.cmd.alt{border-color:var(--rule)}
+.cmd.alt button{background:var(--well);color:var(--ink);border-left-color:var(--rule)}
+.cmd.alt button:hover{background:var(--rule)}
+.meta{font-size:14px;color:var(--muted);margin:14px 0 0}
+.term{background:var(--term);color:var(--term-ink);padding:18px 20px;margin:0;overflow-x:auto;font-size:13px;line-height:1.6;border:1px solid var(--term)}
+.term .p{color:var(--term-dim)}
+.term .c{color:#fff}
+.term .g{color:var(--term-moss)}
+.cap{font-size:13px;color:var(--muted);margin:8px 0 0}
+section{border-top:1px solid var(--rule);padding:64px 0}
+h2{font-size:30px;line-height:1.15;letter-spacing:-.01em;margin:0 0 16px;font-weight:700}
+h3{font-size:18px;margin:0 0 6px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start}
+.narrow{max-width:40em}
+p{margin:0 0 14px}
+.figures{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--rule);margin-top:28px}
+.figures div{padding:20px;border-right:1px solid var(--rule)}
+.figures div:last-child{border-right:0}
+.figures b{display:block;font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:30px;font-weight:600;letter-spacing:-.02em}
+.figures span{font-size:14px;color:var(--muted)}
+ol.steps{margin:0;padding:0;list-style:none;counter-reset:s}
+ol.steps li{padding:14px 0;border-top:1px solid var(--rule)}
+ol.steps li:first-child{border-top:0;padding-top:0}
+.blocks{border:1px solid var(--rule);padding:20px;background:var(--well)}
+.blocks svg{display:block;width:100%;height:auto}
+.legend{display:flex;gap:18px;font-size:13px;color:var(--muted);margin-top:12px;flex-wrap:wrap}
+.legend i{display:inline-block;width:11px;height:11px;margin-right:6px;vertical-align:-1px}
+.cmds{display:grid;grid-template-columns:repeat(2,1fr);border-top:1px solid var(--rule);border-left:1px solid var(--rule);margin-top:28px}
+.cmds article{border-right:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:22px}
+.cmds h3 code{font-size:16px}
+.cmds p{color:var(--muted);font-size:15px}
+.cmds pre{margin:12px 0 0;font-size:12.5px}
+.tablewrap{overflow-x:auto;margin-top:28px}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th,td{text-align:left;vertical-align:top;padding:12px 14px;border-bottom:1px solid var(--rule)}
+thead th{border-bottom:1px solid var(--ink);font-size:14px}
+tbody th{font-weight:600;width:22%}
+td.us{background:var(--well)}
+.agents pre{margin:0 0 12px}
+ul.plain{margin:0;padding:0 0 0 18px}
+ul.plain li{margin:0 0 8px}
+footer{border-top:1px solid var(--ink);padding:40px 0 56px;font-size:15px}
+footer .wrap{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap}
+footer nav{display:flex;gap:20px;flex-wrap:wrap}
+footer p{color:var(--muted);margin:0}
+@media (max-width:860px){
+  .hero-top,.two{grid-template-columns:1fr;gap:32px}
+  .hero{padding:44px 0 40px}
+  h1{font-size:34px}
+  .cmds{grid-template-columns:1fr}
+  .figures{grid-template-columns:1fr}
+  .figures div{border-right:0;border-bottom:1px solid var(--rule)}
+  .figures div:last-child{border-bottom:0}
+  nav.top a.hide-s{display:none}
+  section{padding:48px 0}
+  .wrap{padding:0 16px}
+  table{font-size:14px}
+  th,td{padding:10px 8px}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="mark" href="./" aria-label="cowtree home">
+      <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><rect x="1" y="1" width="9" height="9" fill="#16181a"/><rect x="12" y="1" width="9" height="9" fill="none" stroke="#16181a" stroke-width="2"/><rect x="1" y="12" width="9" height="9" fill="none" stroke="#16181a" stroke-width="2"/><rect x="12" y="12" width="9" height="9" fill="#2f6b3a"/></svg>
+      cowtree
+    </a>
+    <nav class="top" aria-label="Primary">
+      <a class="hide-s" href="#how">How it works</a>
+      <a class="hide-s" href="#commands">Commands</a>
+      <a class="hide-s" href="#agents">Agents</a>
+      <a href="https://github.com/paakofiaidoo/cowtree">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+  <div class="hero">
+    <div class="hero-top">
+      <div>
+      <h1>Git worktrees that cost no disk until you edit a file.</h1>
+      <p class="lede">cowtree builds each worktree out of APFS <code>clonefile</code> copies of your checkout, <code>node_modules</code> and build directories included. Run five Claude Code, Codex or Cursor sessions on one repo, one branch each, without five copies of it.</p>
+      </div>
+      <div>
+      <div class="cmd"><code id="c1">brew install paakofiaidoo/tap/cowtree</code><button type="button" data-copy="c1">Copy</button></div>
+      <div class="cmd alt"><code id="c2">curl -fsSL https://raw.githubusercontent.com/paakofiaidoo/cowtree/main/install.sh | bash</code><button type="button" data-copy="c2">Copy</button></div>
+      <p class="meta">Version 0.4.1, MIT licensed. Runs on macOS (APFS) and on Linux with btrfs, XFS or bcachefs. <a href="https://github.com/paakofiaidoo/cowtree/releases">Release notes</a>.</p>
+      </div>
+    </div>
+    <figure style="margin:0">
+<pre class="term" aria-label="Terminal output of cowtree add and cowtree ls"><span class="p">$</span> <span class="c">du -sh myapp</span>
+311M    myapp
+<span class="p">$</span> <span class="c">cowtree add ~/code/myapp payments-retry</span>
+Preparing worktree (new branch 'payments-retry')
+~/code/wt/myapp-payments-retry
+<span class="p">$</span> <span class="c">cowtree add ~/code/myapp search-index</span>
+~/code/wt/myapp-search-index
+<span class="p">$</span> <span class="c">cowtree add ~/code/myapp fix-login</span>
+~/code/wt/myapp-fix-login
+<span class="p">$</span> <span class="c">cowtree ls ~/code/myapp</span>
+~/code/myapp  (base)
+~/code/wt/myapp-fix-login       [fix-login]       logical 301.0MB  <span class="g">owned 8.0KB</span>
+~/code/wt/myapp-payments-retry  [payments-retry]  logical 301.0MB  <span class="g">owned 12.0KB</span>
+~/code/wt/myapp-search-index    [search-index]    logical 301.0MB  <span class="g">owned 8.0KB</span></pre>
+      <figcaption class="cap">Captured on a Next.js checkout with its dependencies installed. Free space on the volume, measured with <code>df</code> before and after the three <code>add</code>s: unchanged.</figcaption>
+    </figure>
+  </div>
+</div>
+
+<section id="problem">
+  <div class="wrap two">
+    <div>
+      <h2>Parallel sessions need parallel checkouts</h2>
+      <p>An AI coding agent that works on a branch needs a working tree of its own; two agents in one checkout overwrite each other. <code>git worktree add</code> solves that, but every worktree is a full second copy of every checked-out file, and <code>node_modules</code>, <code>build/</code> and <code>.venv</code> are missing until you reinstall them.</p>
+      <p>On a laptop that is the ceiling on how many sessions you can run. cowtree removes it: the base checkout stays on <code>main</code>, every session gets a worktree on its own branch, and each one owns only the bytes it writes.</p>
+    </div>
+    <div>
+      <div class="figures" style="margin-top:0">
+        <div><b>704&nbsp;MB</b><span>checkout with dependencies</span></div>
+        <div><b>3.5&nbsp;MB</b><span>the same checkout as a cowtree worktree</span></div>
+        <div><b>1&nbsp;file</b><span>is what an edit costs: that file</span></div>
+      </div>
+      <p class="cap">Figures from the project README. Editors, compilers and runtimes see ordinary files, so builds run in the worktree unchanged.</p>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap two">
+    <div>
+      <h2>How it works</h2>
+      <p class="narrow">No FUSE, no daemon, no virtual filesystem. A few hundred lines of bash and a small Python helper on top of <code>git worktree</code> and the filesystem's own block cloning.</p>
+      <ol class="steps">
+        <li><h3><code>git worktree add --no-checkout</code></h3>Creates the worktree metadata and the branch, without writing files.</li>
+        <li><h3><code>cp -c -R</code> (APFS <code>clonefile</code>)</h3>Clones every top-level entry of the base except <code>.git</code>, ignored directories included. A clone shares the base's blocks and costs zero bytes until one of them is written.</li>
+        <li><h3><code>git read-tree</code> + <code>update-index --refresh</code></h3>Populates the index without rewriting the clones. Only files that differ between the base and the target ref are checked out from git.</li>
+        <li><h3><code>.cowtree.toml</code></h3>Links the worktree back to its base, and the branch link is recorded in git config, so <code>cowtree which</code> works from any tool that reads git.</li>
+      </ol>
+    </div>
+    <div>
+      <div class="blocks" role="img" aria-label="Diagram: three worktrees point at the base checkout's blocks; only the blocks a worktree writes become its own">
+        <svg viewBox="0 0 420 200" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,SF Mono,Menlo,monospace" font-size="11">
+          <text x="0" y="12" fill="#16181a">base  ~/code/myapp</text>
+          <g fill="#16181a">
+            <rect x="0" y="22" width="22" height="22"/><rect x="26" y="22" width="22" height="22"/><rect x="52" y="22" width="22" height="22"/><rect x="78" y="22" width="22" height="22"/><rect x="104" y="22" width="22" height="22"/><rect x="130" y="22" width="22" height="22"/><rect x="156" y="22" width="22" height="22"/><rect x="182" y="22" width="22" height="22"/><rect x="208" y="22" width="22" height="22"/><rect x="234" y="22" width="22" height="22"/><rect x="260" y="22" width="22" height="22"/><rect x="286" y="22" width="22" height="22"/>
+          </g>
+          <g fill="none" stroke="#16181a" stroke-width="1.5">
+            <text x="0" y="86" fill="#16181a" stroke="none">wt/myapp-payments-retry</text>
+            <rect x="0.75" y="96.75" width="20.5" height="20.5"/><rect x="26.75" y="96.75" width="20.5" height="20.5"/><rect x="52.75" y="96.75" width="20.5" height="20.5"/><rect x="104.75" y="96.75" width="20.5" height="20.5"/><rect x="130.75" y="96.75" width="20.5" height="20.5"/><rect x="156.75" y="96.75" width="20.5" height="20.5"/><rect x="182.75" y="96.75" width="20.5" height="20.5"/><rect x="208.75" y="96.75" width="20.5" height="20.5"/><rect x="234.75" y="96.75" width="20.5" height="20.5"/><rect x="260.75" y="96.75" width="20.5" height="20.5"/><rect x="286.75" y="96.75" width="20.5" height="20.5"/>
+            <text x="0" y="160" fill="#16181a" stroke="none">wt/myapp-search-index</text>
+            <rect x="0.75" y="170.75" width="20.5" height="20.5"/><rect x="26.75" y="170.75" width="20.5" height="20.5"/><rect x="52.75" y="170.75" width="20.5" height="20.5"/><rect x="78.75" y="170.75" width="20.5" height="20.5"/><rect x="104.75" y="170.75" width="20.5" height="20.5"/><rect x="130.75" y="170.75" width="20.5" height="20.5"/><rect x="156.75" y="170.75" width="20.5" height="20.5"/><rect x="182.75" y="170.75" width="20.5" height="20.5"/><rect x="234.75" y="170.75" width="20.5" height="20.5"/><rect x="260.75" y="170.75" width="20.5" height="20.5"/><rect x="286.75" y="170.75" width="20.5" height="20.5"/>
+          </g>
+          <rect x="78" y="96" width="22" height="22" fill="#b5462b"/>
+          <rect x="208" y="170" width="22" height="22" fill="#b5462b"/>
+          <rect x="312" y="170" width="22" height="22" fill="#2f6b3a"/>
+          <text x="330" y="112" fill="#5d6461">owns 1 block</text>
+          <text x="342" y="186" fill="#5d6461">owns 2</text>
+        </svg>
+        <div class="legend"><span><i style="background:#16181a"></i>base blocks</span><span><i style="border:1.5px solid #16181a"></i>clone, shared</span><span><i style="background:#b5462b"></i>edited block</span><span><i style="background:#2f6b3a"></i>new file</span></div>
+      </div>
+      <p class="cap"><code>du</code> cannot see block sharing, so <code>ls</code> and <code>status</code> report the bytes a worktree owns: files whose size or mtime differ from the base. On a filesystem without cloning, cowtree falls back to a plain copy and says so.</p>
+    </div>
+  </div>
+</section>
+
+<section id="commands">
+  <div class="wrap">
+    <h2>Five commands cover the day</h2>
+    <p class="narrow">One task, one worktree, one branch. Start with <code>add</code>, find things with <code>ls</code> and <code>which</code>, finish with <code>rm</code> or let <code>sweep</code> clear what merged. Output below is real.</p>
+    <div class="cmds">
+      <article>
+        <h3><code>cowtree add &lt;base&gt; &lt;topic&gt;</code></h3>
+        <p>Clones the base into <code>&lt;wt_root&gt;/&lt;repo&gt;-&lt;topic&gt;</code> on branch <code>&lt;topic&gt;</code> and prints the path. <code>--from</code>, <code>--branch</code>, <code>--exclude</code>, <code>--also</code>.</p>
+<pre class="term"><span class="p">$</span> <span class="c">cowtree add ~/code/myapp payments-retry</span>
+Preparing worktree (new branch 'payments-retry')
+~/code/wt/myapp-payments-retry</pre>
+      </article>
+      <article>
+        <h3><code>cowtree which &lt;branch&gt;</code>, <code>branches</code></h3>
+        <p>Which worktree holds a branch. The link lives in git config, so it survives without cowtree.</p>
+<pre class="term"><span class="p">$</span> <span class="c">cowtree branches ~/code/myapp</span>
+main             (base)
+payments-retry   ~/code/wt/myapp-payments-retry
+search-index     ~/code/wt/myapp-search-index
+<span class="p">$</span> <span class="c">cowtree which search-index ~/code/myapp</span>
+~/code/wt/myapp-search-index</pre>
+      </article>
+      <article class="wide">
+        <h3><code>cowtree ls [&lt;base&gt;] | --all</code></h3>
+        <p>Every worktree of a base, or every cowtree worktree, with branch, logical size and the bytes it actually owns.</p>
+<pre class="term"><span class="p">$</span> <span class="c">cowtree ls ~/code/myapp</span>
+~/code/myapp  (base)
+~/code/wt/myapp-payments-retry  [payments-retry]  logical 301.0MB  owned 12.0KB
+<span class="p">$</span> <span class="c">cowtree status wt/myapp-payments-retry</span>
+branch    payments-retry  (base on main)
+changes   1 uncommitted
+owned     12.0KB</pre>
+      </article>
+      <article class="wide">
+        <h3><code>cowtree rm &lt;worktree&gt;</code>, <code>sweep</code></h3>
+        <p><code>rm</code> removes a worktree and deletes its branch if merged. <code>sweep</code> removes every clean worktree whose branch or GitHub PR merged, squash and rebase included.</p>
+<pre class="term"><span class="p">$</span> <span class="c">cowtree sweep ~/code/myapp --dry-run</span>
+would remove ~/code/wt/myapp-fix-login [fix-login merged into main]
+skip ~/code/wt/myapp-payments-retry (not clean)
+<span class="p">$</span> <span class="c">cowtree rm wt/myapp-fix-login</span>
+deleted merged branch fix-login</pre>
+      </article>
+    </div>
+    <p class="cap">Also: <code>adopt</code> and <code>dedupe</code> turn existing plain worktrees into clones, <code>diff</code>, <code>workspace</code> for a VS Code multi-root window, <code>config</code>. Full table in the <a href="https://github.com/paakofiaidoo/cowtree#commands">README</a>.</p>
+  </div>
+</section>
+
+<section id="agents" class="agents">
+  <div class="wrap two">
+    <div>
+      <h2>Built for Claude Code, Codex and Cursor</h2>
+      <p>The repository is a Claude Code plugin: a skill that teaches the one-worktree-per-task rule, the <code>/cowtree-add</code>, <code>/cowtree-status</code> and <code>/cowtree-sweep</code> commands, and an MCP server that exposes every command as a tool.</p>
+      <ul class="plain">
+        <li><b>Claude Code:</b> <code>/plugin marketplace add paakofiaidoo/cowtree</code>, then <code>/plugin install cowtree</code>.</li>
+        <li><b>Any MCP client</b> (Codex, Cursor, Windsurf, Zed, Cline): <code>python3 lib/mcp_server.py</code> over stdio, standard library only.</li>
+        <li><b>Codex and AGENTS.md readers:</b> <code>cowtree agent-install codex</code>.</li>
+        <li><b>Cursor:</b> <code>cowtree agent-install cursor --project .</code> writes <code>.cursor/rules/cowtree.mdc</code>.</li>
+      </ul>
+    </div>
+    <div>
+<pre class="term"><span class="p">$</span> <span class="c">cowtree agent-install</span>
+<span class="p">$</span> <span class="c">cowtree agent-install --project .</span></pre>
+<pre class="term">{ "mcpServers": { "cowtree": {
+    "command": "python3",
+    "args": ["~/.cowtree/lib/mcp_server.py"] } } }</pre>
+      <p class="cap">MCP tools: <code>cowtree_add</code>, <code>cowtree_rm</code>, <code>cowtree_ls</code>, <code>cowtree_status</code>, <code>cowtree_diff</code>, <code>cowtree_branches</code>, <code>cowtree_which</code>, <code>cowtree_adopt</code>, <code>cowtree_sweep</code>, <code>cowtree_config</code>.</p>
+    </div>
+  </div>
+</section>
+
+<section id="compare">
+  <div class="wrap">
+    <h2>cowtree and plain <code>git worktree</code></h2>
+    <p class="narrow">A cowtree worktree is a git worktree. <code>git worktree list</code>, VS Code and JetBrains see it as a normal checkout. What changes is how its files get there.</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th scope="col"></th><th scope="col"><code>git worktree add</code></th><th scope="col"><code>cowtree add</code></th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Checked-out files</th><td>A full second copy</td><td class="us">Clones of the base, zero bytes until edited</td></tr>
+        <tr><th scope="row"><code>node_modules</code>, <code>build/</code>, <code>.venv</code></th><td>Missing; reinstall per worktree</td><td class="us">Cloned with everything else, ready to run</td></tr>
+        <tr><th scope="row">Disk per worktree</th><td>Size of the checkout</td><td class="us">Bytes the worktree writes</td></tr>
+        <tr><th scope="row">Which branch is where</th><td><code>git worktree list</code></td><td class="us"><code>branches</code>, <code>which</code>, plus a link in git config</td></tr>
+        <tr><th scope="row">Cleaning up merged work</th><td>By hand</td><td class="us"><code>sweep</code>, including squash-merged PRs via <code>gh</code></td></tr>
+        <tr><th scope="row">Existing worktrees</th><td>—</td><td class="us"><code>adopt</code> / <code>dedupe</code> turn them into clones</td></tr>
+        <tr><th scope="row">Coding agents</th><td>—</td><td class="us">Claude Code plugin, MCP server, AGENTS.md and Cursor rules</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<section id="install">
+  <div class="wrap two">
+    <div>
+      <h2>Install</h2>
+      <p>Needs git 2.31 or newer, python3 and bash 3.2 or newer. The installer puts <code>cowtree</code> in <code>~/bin</code>, writes <code>~/.config/cowtree/config.toml</code> and wires up any coding agents it finds (<code>COWTREE_AGENTS=0</code> to skip).</p>
+      <p>Linux reflink support (btrfs, XFS, bcachefs) is written but not yet exercised on a Linux box; reports are welcome.</p>
+    </div>
+    <div>
+      <div class="cmd"><code id="c3">brew install paakofiaidoo/tap/cowtree</code><button type="button" data-copy="c3">Copy</button></div>
+      <div class="cmd alt"><code id="c4">curl -fsSL https://raw.githubusercontent.com/paakofiaidoo/cowtree/main/install.sh | bash</code><button type="button" data-copy="c4">Copy</button></div>
+      <p class="meta">Source, issues and <a href="https://github.com/paakofiaidoo/cowtree/blob/main/CONTRIBUTING.md">contributing notes</a> are <a href="https://github.com/paakofiaidoo/cowtree">on GitHub</a>; the formula lives in the <a href="https://github.com/paakofiaidoo/homebrew-tap">Homebrew tap</a>.</p>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>cowtree is MIT licensed. Made by <a href="https://github.com/paakofiaidoo">Paa Kofi Aidoo</a>.</p>
+    <nav aria-label="Footer"><a href="https://github.com/paakofiaidoo/cowtree">GitHub</a><a href="https://github.com/paakofiaidoo/cowtree/releases">Releases</a><a href="https://github.com/paakofiaidoo/cowtree/issues">Issues</a></nav>
+  </div>
+</footer>
+<script>
+document.querySelectorAll('[data-copy]').forEach(function(b){b.addEventListener('click',function(){var t=document.getElementById(b.dataset.copy).textContent;navigator.clipboard.writeText(t).then(function(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy'},1400)})})});
+</script>
+</body>
+</html>
