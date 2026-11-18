@@ -30,7 +30,7 @@
   "url": "https://paakofiaidoo.github.io/cowtree/",
   "applicationCategory": "DeveloperApplication",
   "operatingSystem": "macOS, Linux",
-  "softwareVersion": "0.4.1",
+  "softwareVersion": "0.5.0",
   "license": "https://opensource.org/licenses/MIT",
   "downloadUrl": "https://github.com/paakofiaidoo/cowtree/releases",
   "installUrl": "https://github.com/paakofiaidoo/cowtree#install",
@@ -103,6 +103,8 @@ ol.steps li:first-child{border-top:0;padding-top:0}
 .cmds pre{margin:12px 0 0;font-size:12.5px}
 .tablewrap{overflow-x:auto;margin-top:28px}
 table{width:100%;border-collapse:collapse;font-size:15px}
+table.approaches{min-width:820px}
+table.approaches thead th{vertical-align:bottom;font-weight:600}
 th,td{text-align:left;vertical-align:top;padding:12px 14px;border-bottom:1px solid var(--rule)}
 thead th{border-bottom:1px solid var(--ink);font-size:14px}
 tbody th{font-weight:600;width:22%}
@@ -140,7 +142,7 @@ footer p{color:var(--muted);margin:0}
     <nav class="top" aria-label="Primary">
       <a class="hide-s" href="#how">How it works</a>
       <a class="hide-s" href="#commands">Commands</a>
-      <a class="hide-s" href="#agents">Agents</a>
+      <a class="hide-s" href="#why">Why cowtree</a>
       <a href="https://github.com/paakofiaidoo/cowtree">GitHub</a>
     </nav>
   </div>
@@ -157,7 +159,7 @@ footer p{color:var(--muted);margin:0}
       <div>
       <div class="cmd"><code id="c1">brew install paakofiaidoo/tap/cowtree</code><button type="button" data-copy="c1">Copy</button></div>
       <div class="cmd alt"><code id="c2">curl -fsSL https://raw.githubusercontent.com/paakofiaidoo/cowtree/main/install.sh | bash</code><button type="button" data-copy="c2">Copy</button></div>
-      <p class="meta">Version 0.4.1, MIT licensed. Runs on macOS (APFS) and on Linux with btrfs, XFS or bcachefs. <a href="https://github.com/paakofiaidoo/cowtree/releases">Release notes</a>.</p>
+      <p class="meta">Version 0.5.0, MIT licensed. Runs on macOS (APFS) and on Linux with btrfs, XFS or bcachefs. <a href="https://github.com/paakofiaidoo/cowtree/releases">Release notes</a>.</p>
       </div>
     </div>
     <figure style="margin:0">
@@ -238,8 +240,8 @@ Preparing worktree (new branch 'payments-retry')
 
 <section id="commands">
   <div class="wrap">
-    <h2>Five commands cover the day</h2>
-    <p class="narrow">One task, one worktree, one branch. Start with <code>add</code>, find things with <code>ls</code> and <code>which</code>, finish with <code>rm</code> or let <code>sweep</code> clear what merged. Output below is real.</p>
+    <h2>Six commands cover the day</h2>
+    <p class="narrow">One task, one worktree, one branch. Start with <code>add</code>, find things with <code>ls</code> and <code>which</code>, reset build output with <code>clear</code>, finish with <code>rm</code> or let <code>sweep</code> remove what merged. Output below is real.</p>
     <div class="cmds">
       <article>
         <h3><code>cowtree add &lt;base&gt; &lt;topic&gt;</code></h3>
@@ -270,6 +272,23 @@ changes   1 uncommitted
 owned     12.0KB</pre>
       </article>
       <article class="wide">
+        <h3><code>cowtree clear &lt;worktree&gt;</code></h3>
+        <p>Git tracks the source; everything ignored is build output. <code>clear</code> throws the worktree's ignored paths away and re-clones them from the base, so they match the base again and the blocks they owned are freed. Tracked files and their edits are never touched; untracked files that are not ignored are kept unless you pass <code>--untracked</code>. Alias: <code>reset</code>.</p>
+<pre class="term"><span class="p">$</span> <span class="c">cowtree clear wt/myapp-checkout-v2 --dry-run</span>
+would reclone .next
+would reclone node_modules
+keep    NOTES.md  (untracked, not ignored; --untracked to reset it)
+owned 42.6MB, would free about 42.6MB
+<span class="p">$</span> <span class="c">cowtree clear wt/myapp-checkout-v2</span>
+reclone .next
+reclone node_modules
+keep    NOTES.md  (untracked, not ignored; --untracked to reset it)
+owned 42.6MB -&gt; <span class="g">16.0KB</span>
+<span class="p">$</span> <span class="c">git -C wt/myapp-checkout-v2 status --short</span>
+ M app/page.tsx
+?? NOTES.md</pre>
+      </article>
+      <article class="wide">
         <h3><code>cowtree rm &lt;worktree&gt;</code>, <code>sweep</code></h3>
         <p><code>rm</code> removes a worktree and deletes its branch if merged. <code>sweep</code> removes every clean worktree whose branch or GitHub PR merged, squash and rebase included.</p>
 <pre class="term"><span class="p">$</span> <span class="c">cowtree sweep ~/code/myapp --dry-run</span>
@@ -287,7 +306,7 @@ deleted merged branch fix-login</pre>
   <div class="wrap two">
     <div>
       <h2>Built for Claude Code, Codex and Cursor</h2>
-      <p>The repository is a Claude Code plugin: a skill that teaches the one-worktree-per-task rule, the <code>/cowtree-add</code>, <code>/cowtree-status</code> and <code>/cowtree-sweep</code> commands, and an MCP server that exposes every command as a tool.</p>
+      <p>The repository is a Claude Code plugin: a skill that teaches the one-worktree-per-task rule, the <code>/cowtree-add</code>, <code>/cowtree-status</code>, <code>/cowtree-clear</code> and <code>/cowtree-sweep</code> commands, and an MCP server that exposes every command as a tool.</p>
       <ul class="plain">
         <li><b>Claude Code:</b> <code>/plugin marketplace add paakofiaidoo/cowtree</code>, then <code>/plugin install cowtree</code>.</li>
         <li><b>Any MCP client</b> (Codex, Cursor, Windsurf, Zed, Cline): <code>python3 lib/mcp_server.py</code> over stdio, standard library only.</li>
@@ -301,27 +320,29 @@ deleted merged branch fix-login</pre>
 <pre class="term">{ "mcpServers": { "cowtree": {
     "command": "python3",
     "args": ["~/.cowtree/lib/mcp_server.py"] } } }</pre>
-      <p class="cap">MCP tools: <code>cowtree_add</code>, <code>cowtree_rm</code>, <code>cowtree_ls</code>, <code>cowtree_status</code>, <code>cowtree_diff</code>, <code>cowtree_branches</code>, <code>cowtree_which</code>, <code>cowtree_adopt</code>, <code>cowtree_sweep</code>, <code>cowtree_config</code>.</p>
+      <p class="cap">MCP tools: <code>cowtree_add</code>, <code>cowtree_rm</code>, <code>cowtree_ls</code>, <code>cowtree_status</code>, <code>cowtree_diff</code>, <code>cowtree_branches</code>, <code>cowtree_which</code>, <code>cowtree_adopt</code>, <code>cowtree_clear</code>, <code>cowtree_sweep</code>, <code>cowtree_config</code>.</p>
     </div>
   </div>
 </section>
 
-<section id="compare">
+<section id="why">
   <div class="wrap">
-    <h2>cowtree and plain <code>git worktree</code></h2>
-    <p class="narrow">A cowtree worktree is a git worktree. <code>git worktree list</code>, VS Code and JetBrains see it as a normal checkout. What changes is how its files get there.</p>
-    <div class="tablewrap"><table>
-      <thead><tr><th scope="col"></th><th scope="col"><code>git worktree add</code></th><th scope="col"><code>cowtree add</code></th></tr></thead>
+    <h2>Why cowtree</h2>
+    <p class="narrow">There are several ways to give each session its own working tree. A cowtree worktree is both: a real linked git worktree that shares history and branches with the base, and a copy-on-write clone of the whole checkout, ignored build directories included. Around that it keeps the bookkeeping parallel sessions need.</p>
+    <div class="tablewrap"><table class="approaches">
+      <thead><tr><th scope="col"></th><th scope="col">Plain <code>git worktree</code></th><th scope="col">A second full clone</th><th scope="col">Copy-on-write copy of the whole directory</th><th scope="col">Worktree manager, copy-on-write for ignored files only</th><th scope="col">cowtree</th></tr></thead>
       <tbody>
-        <tr><th scope="row">Checked-out files</th><td>A full second copy</td><td class="us">Clones of the base, zero bytes until edited</td></tr>
-        <tr><th scope="row"><code>node_modules</code>, <code>build/</code>, <code>.venv</code></th><td>Missing; reinstall per worktree</td><td class="us">Cloned with everything else, ready to run</td></tr>
-        <tr><th scope="row">Disk per worktree</th><td>Size of the checkout</td><td class="us">Bytes the worktree writes</td></tr>
-        <tr><th scope="row">Which branch is where</th><td><code>git worktree list</code></td><td class="us"><code>branches</code>, <code>which</code>, plus a link in git config</td></tr>
-        <tr><th scope="row">Cleaning up merged work</th><td>By hand</td><td class="us"><code>sweep</code>, including squash-merged PRs via <code>gh</code></td></tr>
-        <tr><th scope="row">Existing worktrees</th><td>—</td><td class="us"><code>adopt</code> / <code>dedupe</code> turn them into clones</td></tr>
-        <tr><th scope="row">Coding agents</th><td>—</td><td class="us">Claude Code plugin, MCP server, AGENTS.md and Cursor rules</td></tr>
+        <tr><th scope="row">One repository: shared history and branches</th><td>Yes</td><td>No, a separate repository</td><td>No, a copy of the repository, <code>.git</code> included</td><td>Yes</td><td class="us">Yes</td></tr>
+        <tr><th scope="row">Checked-out source files</th><td>Full copy</td><td>Full copy</td><td>Clones, 0 bytes until edited</td><td>Full copy</td><td class="us">Clones, 0 bytes until edited</td></tr>
+        <tr><th scope="row"><code>node_modules</code>, <code>build/</code>, <code>.venv</code></th><td>Missing, reinstall</td><td>Missing, reinstall</td><td>Cloned</td><td>Cloned</td><td class="us">Cloned</td></tr>
+        <tr><th scope="row">Which branch is in which tree</th><td><code>git worktree list</code></td><td>Kept track of by you</td><td>Kept track of by you</td><td>Depends on the tool</td><td class="us"><code>which</code>, <code>branches</code>, a link in git config</td></tr>
+        <tr><th scope="row">Reset build files to the base's</th><td>Delete and rebuild</td><td>Delete and rebuild</td><td>Copy the directory again</td><td>Depends on the tool</td><td class="us"><code>clear</code></td></tr>
+        <tr><th scope="row">Remove merged work</th><td>By hand</td><td>By hand</td><td>By hand</td><td>Depends on the tool</td><td class="us"><code>sweep</code>, squash-merged PRs too</td></tr>
+        <tr><th scope="row">Existing worktrees</th><td>—</td><td>—</td><td>—</td><td>Depends on the tool</td><td class="us"><code>adopt</code> and <code>dedupe</code> turn them into clones</td></tr>
+        <tr><th scope="row">Coding agents</th><td>—</td><td>—</td><td>—</td><td>Depends on the tool</td><td class="us">Claude Code plugin, MCP server, AGENTS.md and Cursor rules</td></tr>
       </tbody>
     </table></div>
+    <p class="cap">A cowtree worktree is still a git worktree: <code>git worktree list</code>, VS Code and JetBrains see a normal checkout. Copy-on-write needs APFS on macOS or btrfs, XFS or bcachefs on Linux; the Linux reflink backend is written but not yet exercised on a Linux box, and elsewhere cowtree falls back to a plain copy and says so.</p>
   </div>
 </section>
 

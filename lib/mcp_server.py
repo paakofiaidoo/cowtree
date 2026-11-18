@@ -23,6 +23,8 @@ TOOLS = {
     "cowtree_branches": S("Map every local branch of a base to the worktree it is checked out in.", {"base": P("base checkout path")}, ["base"]),
     "cowtree_which": S("Worktree path for a branch.", {"branch": P("branch name"), "base": P("base checkout path")}, ["branch", "base"]),
     "cowtree_adopt": S("Link and dedupe an existing plain git worktree.", {"worktree": P("worktree path")}, ["worktree"]),
+    "cowtree_clear": S("Throw away a worktree's git-ignored build files (node_modules, build dirs, caches) and re-clone them copy-on-write from the base; tracked files and their edits are never touched. Untracked files that are not ignored are only listed unless untracked=true. Dry-run first.",
+                       {"worktree": P("worktree path"), "dry_run": {"type": "boolean"}, "untracked": {"type": "boolean"}}, ["worktree"]),
     "cowtree_sweep": S("Remove worktrees whose branch is merged and tree clean. Always dry-run first.", {"base": P("base checkout path; omit for --all"), "dry_run": {"type": "boolean"}}, []),
     "cowtree_config": S("Show resolved configuration.", {"path": P("worktree path, or omit for global")}, []),
 }
@@ -45,6 +47,7 @@ def call(name, a):
     elif name == "cowtree_branches": args = ["branches", a["base"]]
     elif name == "cowtree_which": args = ["which", a["branch"], a["base"]]
     elif name == "cowtree_adopt": args = ["adopt", a["worktree"]]
+    elif name == "cowtree_clear": args = ["clear", a["worktree"]] + (["--dry-run"] if a.get("dry_run", True) else []) + (["--untracked"] if a.get("untracked") else [])
     elif name == "cowtree_sweep": args = ["sweep", a.get("base") or "--all"] + (["--dry-run"] if a.get("dry_run", True) else [])
     elif name == "cowtree_config": args = ["config"] + ([a["path"]] if a.get("path") else [])
     else: return f"unknown tool {name}", True
@@ -64,7 +67,7 @@ def main():
         except ValueError: continue
         m, id_, p = req.get("method"), req.get("id"), req.get("params") or {}
         if m == "initialize":
-            reply(id_, {"protocolVersion": PROTOCOL, "capabilities": {"tools": {}}, "serverInfo": {"name": "cowtree", "version": "0.4.1"}})
+            reply(id_, {"protocolVersion": PROTOCOL, "capabilities": {"tools": {}}, "serverInfo": {"name": "cowtree", "version": "0.5.0"}})
         elif m == "tools/list":
             reply(id_, {"tools": [{"name": n, **t} for n, t in TOOLS.items()]})
         elif m == "tools/call":

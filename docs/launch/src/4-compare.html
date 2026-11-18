@@ -1,12 +1,13 @@
-<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="base.css"><body><h2>cowtree vs plain <code>git worktree</code></h2>
-<table style="margin-top:34px;border-collapse:collapse;width:100%;font-size:21px">
-<style>td,th{padding:13px 16px;border-bottom:1px solid #d9dcd6;text-align:left}thead th{border-bottom:2px solid #16181a}td.us{background:#f3f4f1}</style>
-<thead><tr><th></th><th><code>git worktree a&#100;d</code></th><th><code>cowtree add</code></th></tr></thead>
-<tr><th>Checked-out files</th><td>A full second copy</td><td class="us">Clones, 0 bytes until edited</td></tr>
-<tr><th>node_modules, build/, .venv</th><td>Missing, reinstall</td><td class="us">Cloned, ready to run</td></tr>
-<tr><th>Disk per worktree</th><td>Size of the checkout</td><td class="us">Bytes it writes</td></tr>
-<tr><th>Which branch is where</th><td><code>git worktree list</code></td><td class="us"><code>branches</code>, <code>which</code>, git config link</td></tr>
-<tr><th>Merged work</th><td>Clean up by hand</td><td class="us"><code>sweep</code>, squash-merged PRs too</td></tr>
-<tr><th>Coding agents</th><td>—</td><td class="us">Claude Code plugin, MCP server</td></tr>
+<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="base.css"><body><h2>Why cowtree: a linked worktree that is also a clone</h2>
+<table style="margin-top:30px;border-collapse:collapse;width:100%;font-size:17px">
+<style>td,th{padding:10px 12px;border-bottom:1px solid #d9dcd6;text-align:left;vertical-align:top}thead th{border-bottom:2px solid #16181a;vertical-align:bottom;font-size:16px}td.us{background:#f3f4f1}</style>
+<thead><tr><th></th><th>Plain <code>git worktree</code></th><th>Second full clone</th><th>CoW copy of the whole directory</th><th>Manager with CoW for ignored files</th><th>cowtree</th></tr></thead>
+<tr><th>Shared history and branches</th><td>Yes</td><td>No</td><td>No</td><td>Yes</td><td class="us">Yes</td></tr>
+<tr><th>Source files</th><td>Full copy</td><td>Full copy</td><td>Clones</td><td>Full copy</td><td class="us">Clones</td></tr>
+<tr><th>node_modules, build/</th><td>Reinstall</td><td>Reinstall</td><td>Cloned</td><td>Cloned</td><td class="us">Cloned</td></tr>
+<tr><th>Branch to tree</th><td><code>worktree list</code></td><td>By you</td><td>By you</td><td>Depends</td><td class="us"><code>which</code>, <code>branches</code></td></tr>
+<tr><th>Reset build files</th><td>Rebuild</td><td>Rebuild</td><td>Copy again</td><td>Depends</td><td class="us"><code>clear</code></td></tr>
+<tr><th>Merged work</th><td>By hand</td><td>By hand</td><td>By hand</td><td>Depends</td><td class="us"><code>sweep</code></td></tr>
+<tr><th>Coding agents</th><td>—</td><td>—</td><td>—</td><td>Depends</td><td class="us">Plugin, MCP</td></tr>
 </table>
 <div class="foot"><span>paakofiaidoo.github.io/cowtree</span><span>MIT licensed. macOS APFS, Linux reflink.</span></div>

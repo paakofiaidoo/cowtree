@@ -24,6 +24,7 @@ for the files you change, build dirs included. Install check: `cowtree version` 
 | list with disk cost | `cowtree ls <base>` / `cowtree ls --all` |
 | take over a plain worktree | `cowtree adopt <worktree>` |
 | reclaim space | `cowtree dedupe <worktree>` / `--all` |
+| reset build files to the base's | `cowtree clear <worktree> --dry-run`, then without `--dry-run`; `--untracked` also resets untracked, non-ignored files |
 | clean up merged | `cowtree sweep <base> [--dry-run]`, `cowtree rm <worktree>` |
 | VS Code window per repo | `cowtree workspace <base> --open` |
 | config | `cowtree config`, `cowtree config set <key> <value> [--project <base>]`, `cowtree init <base>` |
