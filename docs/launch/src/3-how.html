@@ -1,0 +1,30 @@
+<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="base.css"><body><h2>How it works: clonefile, not copies</h2>
+<div style="display:grid;grid-template-columns:1.1fr 1fr;gap:56px;margin-top:40px">
+<div style="background:#f3f4f1;border:1px solid #d9dcd6;padding:28px">
+        <svg viewBox="0 0 420 250" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,SF Mono,Menlo,monospace" font-size="11">
+          <text x="0" y="12" fill="#16181a">base  ~/code/myapp</text>
+          <g fill="#16181a">
+            <rect x="0" y="22" width="22" height="22"/><rect x="26" y="22" width="22" height="22"/><rect x="52" y="22" width="22" height="22"/><rect x="78" y="22" width="22" height="22"/><rect x="104" y="22" width="22" height="22"/><rect x="130" y="22" width="22" height="22"/><rect x="156" y="22" width="22" height="22"/><rect x="182" y="22" width="22" height="22"/><rect x="208" y="22" width="22" height="22"/><rect x="234" y="22" width="22" height="22"/><rect x="260" y="22" width="22" height="22"/><rect x="286" y="22" width="22" height="22"/>
+          </g>
+          <g fill="none" stroke="#16181a" stroke-width="1.5">
+            <text x="0" y="86" fill="#16181a" stroke="none">wt/myapp-payments-retry</text>
+            <rect x="0.75" y="96.75" width="20.5" height="20.5"/><rect x="26.75" y="96.75" width="20.5" height="20.5"/><rect x="52.75" y="96.75" width="20.5" height="20.5"/><rect x="104.75" y="96.75" width="20.5" height="20.5"/><rect x="130.75" y="96.75" width="20.5" height="20.5"/><rect x="156.75" y="96.75" width="20.5" height="20.5"/><rect x="182.75" y="96.75" width="20.5" height="20.5"/><rect x="208.75" y="96.75" width="20.5" height="20.5"/><rect x="234.75" y="96.75" width="20.5" height="20.5"/><rect x="260.75" y="96.75" width="20.5" height="20.5"/><rect x="286.75" y="96.75" width="20.5" height="20.5"/>
+            <text x="0" y="160" fill="#16181a" stroke="none">wt/myapp-search-index</text>
+            <rect x="0.75" y="170.75" width="20.5" height="20.5"/><rect x="26.75" y="170.75" width="20.5" height="20.5"/><rect x="52.75" y="170.75" width="20.5" height="20.5"/><rect x="78.75" y="170.75" width="20.5" height="20.5"/><rect x="104.75" y="170.75" width="20.5" height="20.5"/><rect x="130.75" y="170.75" width="20.5" height="20.5"/><rect x="156.75" y="170.75" width="20.5" height="20.5"/><rect x="182.75" y="170.75" width="20.5" height="20.5"/><rect x="234.75" y="170.75" width="20.5" height="20.5"/><rect x="260.75" y="170.75" width="20.5" height="20.5"/><rect x="286.75" y="170.75" width="20.5" height="20.5"/>
+          </g>
+          <rect x="78" y="96" width="22" height="22" fill="#b5462b"/>
+          <rect x="208" y="170" width="22" height="22" fill="#b5462b"/>
+          <rect x="312" y="170" width="22" height="22" fill="#2f6b3a"/>
+          <text x="330" y="112" fill="#5d6461">owns 1 block</text>
+          <text x="342" y="186" fill="#5d6461">owns 2</text>
+          <text x="0" y="234" fill="#5d6461">outlined = shared with base, 0 bytes</text>
+        </svg>
+<p class="muted" style="font-size:16px;margin-top:14px">Black squares are the base. Outlined squares are clones that share its blocks and cost 0 bytes. Red is an edited block, green a new file.</p>
+</div>
+<ol style="padding-left:24px;font-size:20px;line-height:1.45">
+<li style="margin-bottom:18px"><code>git worktree a&#100;d --no-checkout</code> creates the branch and metadata.</li>
+<li style="margin-bottom:18px"><code>cp -c -R</code> clones every top-level entry except <code>.git</code>, ignored dirs included.</li>
+<li style="margin-bottom:18px"><code>git read-tree</code> fills the index without rewriting the clones.</li>
+<li>No FUSE, no daemon. Editors and compilers see ordinary files.</li>
+</ol></div>
+<div class="foot"><span>paakofiaidoo.github.io/cowtree</span><span>MIT licensed. macOS APFS, Linux reflink.</span></div>

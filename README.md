@@ -4,6 +4,8 @@
 [![release](https://img.shields.io/github/v/release/paakofiaidoo/cowtree)](https://github.com/paakofiaidoo/cowtree/releases)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
+Website: https://paakofiaidoo.github.io/cowtree/
+
 **Copy-on-write git worktrees.** One checkout per repo, as many parallel worktrees as you need, each costing
 disk only for the files it changes. Built for AI coding sessions (Claude Code, Codex, Cursor, aider) that want
 to work on several branches or PRs of the same repository at the same time, and just as usable by humans in
