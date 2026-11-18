@@ -3,22 +3,23 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>cowtree — copy-on-write git worktrees for parallel AI coding sessions</title>
-<meta name="description" content="cowtree makes git worktrees out of APFS clonefile copies of your checkout, node_modules included. Run many Claude Code, Codex or Cursor sessions on one repo at near-zero disk cost.">
+<title>cowtree — A separate workspace for every AI agent, at no disk cost</title>
+<meta name="description" content="Running several AI coding agents on one project? They overwrite each other&#39;s files, or each needs a full copy of your code. cowtree gives every agent its own instant copy that uses almost no disk. Works with Claude Code, Codex and Cursor. Free, open source.">
+<meta name="keywords" content="AI coding agents, parallel AI sessions, Claude Code, Codex, Cursor, git worktree, copy-on-write, APFS clonefile, reflink, MCP server, developer tools">
 <link rel="canonical" href="https://paakofiaidoo.github.io/cowtree/">
 <meta name="theme-color" content="#ffffff">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="cowtree">
-<meta property="og:title" content="cowtree — copy-on-write git worktrees">
-<meta property="og:description" content="One checkout, as many worktrees as you have sessions. Each costs disk only for the files it changes. CLI, Homebrew, Claude Code plugin and MCP server. MIT.">
+<meta property="og:title" content="cowtree — A separate workspace for every AI agent, at no disk cost">
+<meta property="og:description" content="Running several AI coding agents on one project? They overwrite each other&#39;s files, or each needs a full copy of your code. cowtree gives every agent its own instant copy that uses almost no disk. Works with Claude Code, Codex and Cursor. Free, open source.">
 <meta property="og:url" content="https://paakofiaidoo.github.io/cowtree/">
 <meta property="og:image" content="https://paakofiaidoo.github.io/cowtree/img/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="cowtree ls output: three worktrees of a 301 MB checkout, each owning a few kilobytes">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="cowtree — copy-on-write git worktrees">
-<meta name="twitter:description" content="Run many AI coding sessions on one repo without a full checkout each. APFS clonefile worktrees, node_modules included. MIT.">
+<meta name="twitter:title" content="cowtree — A separate workspace for every AI agent, at no disk cost">
+<meta name="twitter:description" content="Running several AI coding agents on one project? They overwrite each other&#39;s files, or each needs a full copy of your code. cowtree gives every agent its own instant copy that uses almost no disk. Works with Claude Code, Codex and Cursor. Free, open source.">
 <meta name="twitter:image" content="https://paakofiaidoo.github.io/cowtree/img/og.png">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="img/logo-512.png">
@@ -27,7 +28,7 @@
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   "name": "cowtree",
-  "description": "Copy-on-write git worktrees for parallel AI coding sessions and humans, built on APFS clonefile (reflink on btrfs/XFS).",
+  "description": "Running several AI coding agents on one project? They overwrite each other's files, or each needs a full copy of your code. cowtree gives every agent its own instant copy that uses almost no disk. Works with Claude Code, Codex and Cursor. Free, open source. Under the hood: git worktrees built from copy-on-write clones (APFS clonefile, reflink on btrfs/XFS).",
   "url": "https://paakofiaidoo.github.io/cowtree/",
   "applicationCategory": "DeveloperApplication",
   "operatingSystem": "macOS, Linux",
@@ -63,6 +64,7 @@ nav.top a:hover{color:var(--moss)}
 .hero{padding:72px 0 64px}
 .hero-top{display:grid;grid-template-columns:1.25fr 1fr;gap:48px;align-items:end;margin-bottom:40px}
 .hero-top .lede{margin-bottom:0}
+.under{font-size:15px;color:var(--muted);margin:14px 0 0}
 h1{font-size:52px;line-height:1.08;letter-spacing:-.02em;margin:0 0 20px;font-weight:700}
 .lede{font-size:19px;color:var(--muted);margin:0 0 28px;max-width:34em}
 .cmd{display:flex;align-items:stretch;border:1px solid var(--ink);margin:0 0 10px;background:var(--paper)}
@@ -157,14 +159,15 @@ footer p.small{font-size:13px;margin-top:6px}
   <div class="hero">
     <div class="hero-top">
       <div>
-      <h1>Git worktrees that cost no disk until you edit a file.</h1>
-      <p class="lede">cowtree builds each worktree out of APFS <code>clonefile</code> copies of your checkout, <code>node_modules</code> and build directories included. Run five Claude Code, Codex or Cursor sessions on one repo, one branch each, without five copies of it.</p>
+      <h1>A separate workspace for every AI agent, at no disk cost</h1>
+      <p class="lede">Running several AI coding agents on one project? They overwrite each other&#39;s files, or each needs a full copy of your code. cowtree gives every agent its own instant copy that uses almost no disk. Works with Claude Code, Codex and Cursor. Free, open source.</p>
+      <p class="under">Under the hood: git worktrees built from copy-on-write clones (APFS <code>clonefile</code>), <code>node_modules</code> and build directories included.</p>
       </div>
       <div>
       <div class="cmd"><code id="c1">brew install paakofiaidoo/tap/cowtree</code><button type="button" data-copy="c1">Copy</button></div>
       <div class="cmd alt"><code id="c2">curl -fsSL https://raw.githubusercontent.com/paakofiaidoo/cowtree/main/install.sh | bash</code><button type="button" data-copy="c2">Copy</button></div>
       <p class="meta">Version 0.5.0, MIT licensed. Runs on macOS (APFS) and on Linux with btrfs, XFS or bcachefs. <a href="https://github.com/paakofiaidoo/cowtree/releases">Release notes</a>.</p>
-      <a class="ph" href="https://www.producthunt.com/products/cowtree?embed=true&amp;utm_source=badge-featured&amp;utm_medium=badge&amp;utm_campaign=badge-cowtree" target="_blank" rel="noopener"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1321057&amp;theme=light" alt="cowtree - Git worktrees that cost no disk until you edit a file | Product Hunt" width="250" height="54"></a>
+      <a class="ph" href="https://www.producthunt.com/products/cowtree?embed=true&amp;utm_source=badge-featured&amp;utm_medium=badge&amp;utm_campaign=badge-cowtree" target="_blank" rel="noopener"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1321057&amp;theme=light" alt="cowtree - A separate workspace for every AI agent, at no disk cost | Product Hunt" width="250" height="54"></a>
       </div>
     </div>
     <figure style="margin:0">
@@ -373,7 +376,7 @@ deleted merged branch fix-login</pre>
       <p>cowtree is MIT licensed. Made by <a href="https://github.com/paakofiaidoo">Paa Kofi Aidoo</a>.</p>
       <p class="small">This site counts visits with <a href="https://www.goatcounter.com/help/privacy">GoatCounter</a>: no cookies, no personal data.</p>
     </div>
-    <a class="ph" href="https://www.producthunt.com/products/cowtree?embed=true&amp;utm_source=badge-featured&amp;utm_medium=badge&amp;utm_campaign=badge-cowtree" target="_blank" rel="noopener"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1321057&amp;theme=light" alt="cowtree - Git worktrees that cost no disk until you edit a file | Product Hunt" width="250" height="54" loading="lazy"></a>
+    <a class="ph" href="https://www.producthunt.com/products/cowtree?embed=true&amp;utm_source=badge-featured&amp;utm_medium=badge&amp;utm_campaign=badge-cowtree" target="_blank" rel="noopener"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1321057&amp;theme=light" alt="cowtree - A separate workspace for every AI agent, at no disk cost | Product Hunt" width="250" height="54" loading="lazy"></a>
     <nav aria-label="Footer"><a href="https://github.com/paakofiaidoo/cowtree">GitHub</a><a href="https://github.com/paakofiaidoo/cowtree/releases">Releases</a><a href="https://github.com/paakofiaidoo/cowtree/issues">Issues</a></nav>
   </div>
 </footer>

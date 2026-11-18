@@ -1,6 +1,6 @@
 <!doctype html><meta charset="utf-8"><link rel="stylesheet" href="base.css"><body><div style="display:flex;justify-content:space-between;align-items:center"><div class="mark"><svg width="30" height="30" viewBox="0 0 240 240"><rect width="240" height="240" rx="52" fill="#16181a"/><path d="M84 190V58" stroke="#f4f1ea" stroke-width="18" stroke-linecap="round" fill="none"/><path d="M84 150c0-44 78-30 78-74" stroke="#f4f1ea" stroke-width="18" stroke-linecap="round" fill="none"/><circle cx="84" cy="192" r="24" fill="#f4f1ea"/><circle cx="162" cy="70" r="26" fill="#3fa34d"/></svg> cowtree</div><span class="cmd">brew install paakofiaidoo/tap/cowtree</span></div>
-<h1 style="margin-top:52px;font-size:60px;max-width:15em">Git worktrees that cost no disk until you edit a file.</h1>
-<p class="muted" style="margin-top:18px;font-size:23px">Run five Claude Code, Codex or Cursor sessions on one repo, one branch each, without five copies of it.</p>
+<h1 style="margin-top:52px;font-size:60px;max-width:15em">A separate workspace for every AI agent, at no disk cost</h1>
+<p class="muted" style="margin-top:18px;font-size:23px">Every Claude Code, Codex or Cursor agent gets its own instant copy of your project. Under the hood: copy-on-write git worktrees.</p>
 <pre class="term" style="margin-top:40px;font-size:16px"><span class="p">$</span> <span class="c">cowtree ls ~/code/myapp</span>
 ~/code/myapp  (base)
 ~/code/wt/myapp-fix-login  [fix-login]  logical 301.0MB  <span class="g">owned 8.0KB</span>  base ~/code/myapp
