@@ -6,6 +6,8 @@
 [![release](https://img.shields.io/github/v/release/paakofiaidoo/cowtree)](https://github.com/paakofiaidoo/cowtree/releases)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
+<a href="https://www.producthunt.com/products/cowtree?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-cowtree" target="_blank" rel="noopener"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1321057&theme=light" alt="cowtree - Git worktrees that cost no disk until you edit a file | Product Hunt" width="250" height="54"></a>
+
 Website: https://paakofiaidoo.github.io/cowtree/
 
 **Copy-on-write git worktrees.** One checkout per repo, as many parallel worktrees as you need, each costing
