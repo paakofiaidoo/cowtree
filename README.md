@@ -1,3 +1,5 @@
+<img src="docs/assets/cowtree-logo.svg" width="72" alt="cowtree logo: a git branch whose hollow nodes are shared copies and whose green node is the one you wrote to; the dotted branch is a clone">
+
 # cowtree
 
 [![ci](https://github.com/paakofiaidoo/cowtree/actions/workflows/ci.yml/badge.svg)](https://github.com/paakofiaidoo/cowtree/actions/workflows/ci.yml)

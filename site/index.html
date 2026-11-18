@@ -21,6 +21,7 @@
 <meta name="twitter:description" content="Run many AI coding sessions on one repo without a full checkout each. APFS clonefile worktrees, node_modules included. MIT.">
 <meta name="twitter:image" content="https://paakofiaidoo.github.io/cowtree/img/og.png">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="img/logo-512.png">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -116,6 +117,7 @@ footer{border-top:1px solid var(--ink);padding:40px 0 56px;font-size:15px}
 footer .wrap{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap}
 footer nav{display:flex;gap:20px;flex-wrap:wrap}
 footer p{color:var(--muted);margin:0}
+footer p.small{font-size:13px;margin-top:6px}
 @media (max-width:860px){
   .hero-top,.two{grid-template-columns:1fr;gap:32px}
   .hero{padding:44px 0 40px}
@@ -136,7 +138,7 @@ footer p{color:var(--muted);margin:0}
 <header class="top">
   <div class="wrap">
     <a class="mark" href="./" aria-label="cowtree home">
-      <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><rect x="1" y="1" width="9" height="9" fill="#16181a"/><rect x="12" y="1" width="9" height="9" fill="none" stroke="#16181a" stroke-width="2"/><rect x="1" y="12" width="9" height="9" fill="none" stroke="#16181a" stroke-width="2"/><rect x="12" y="12" width="9" height="9" fill="#2f6b3a"/></svg>
+      <svg width="28" height="28" viewBox="0 0 240 240" aria-hidden="true"><rect width="240" height="240" rx="52" fill="#16181a"/><path d="M84 190V58" stroke="#f4f1ea" stroke-width="18" stroke-linecap="round" fill="none"/><path d="M84 150c0-44 78-30 78-74" stroke="#f4f1ea" stroke-width="18" stroke-linecap="round" fill="none"/><circle cx="84" cy="192" r="24" fill="#f4f1ea"/><circle cx="162" cy="70" r="26" fill="#3fa34d"/></svg>
       cowtree
     </a>
     <nav class="top" aria-label="Primary">
@@ -364,12 +366,16 @@ deleted merged branch fix-login</pre>
 
 <footer>
   <div class="wrap">
-    <p>cowtree is MIT licensed. Made by <a href="https://github.com/paakofiaidoo">Paa Kofi Aidoo</a>.</p>
+    <div>
+      <p>cowtree is MIT licensed. Made by <a href="https://github.com/paakofiaidoo">Paa Kofi Aidoo</a>.</p>
+      <p class="small">This site counts visits with <a href="https://www.goatcounter.com/help/privacy">GoatCounter</a>: no cookies, no personal data.</p>
+    </div>
     <nav aria-label="Footer"><a href="https://github.com/paakofiaidoo/cowtree">GitHub</a><a href="https://github.com/paakofiaidoo/cowtree/releases">Releases</a><a href="https://github.com/paakofiaidoo/cowtree/issues">Issues</a></nav>
   </div>
 </footer>
 <script>
 document.querySelectorAll('[data-copy]').forEach(function(b){b.addEventListener('click',function(){var t=document.getElementById(b.dataset.copy).textContent;navigator.clipboard.writeText(t).then(function(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy'},1400)})})});
 </script>
+<script data-goatcounter="https://cowtree.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>
