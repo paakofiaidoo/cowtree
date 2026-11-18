@@ -6,7 +6,7 @@ python3 - "$out" <<'PY'
 import json, sys
 lines=[json.loads(l) for l in sys.argv[1].splitlines() if l.strip()]
 assert lines[0]["result"]["serverInfo"]["name"]=="cowtree"
-assert len(lines[1]["result"]["tools"])==10
+assert len(lines[1]["result"]["tools"])==11
 assert "wt_root" in lines[2]["result"]["content"][0]["text"] and not lines[2]["result"]["isError"]
-print("PASS mcp: initialize, 10 tools, tools/call")
+print("PASS mcp: initialize, 11 tools, tools/call")
 PY

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # cowtree — copy-on-write git worktrees (APFS clonefile). See README.md for every command.
 set -euo pipefail
-VERSION=0.4.1
+VERSION=0.5.0
 HERE=$(cd "$(dirname "$(readlink "${BASH_SOURCE[0]}" || echo "${BASH_SOURCE[0]}")")/.." && pwd)
 [ -d "$HERE/lib" ] || HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 GLOBAL_CFG="${COWTREE_CONFIG:-${XDG_CONFIG_HOME:-$HOME/.config}/cowtree/config.toml}"
@@ -22,6 +22,7 @@ cowtree $VERSION — copy-on-write git worktrees for parallel AI sessions and hu
   cowtree status [<worktree>]
   cowtree diff [<worktree>]
   cowtree dedupe <worktree> | --all [--dry-run]
+  cowtree clear <worktree> [--dry-run] [--untracked]   # reset ignored build files to clones of the base's (alias: reset)
   cowtree workspace <base> [--open]
   cowtree code <worktree>
   cowtree init [<base>]
@@ -276,6 +277,77 @@ cmd_dedupe() {
   done
 }
 
+owned_paths() { # owned_paths <wt> <base> <relpath>... -> bytes owned under those paths (size+mtime differ from base, or not in base)
+  python3 - "$@" <<'PY'
+import os, sys
+wt, base, rels = sys.argv[1], sys.argv[2], sys.argv[3:]
+def owned(p, bp):
+    try: st = os.lstat(p)
+    except OSError: return 0
+    if os.path.islink(p) or not os.path.isfile(p): return 0
+    try:
+        b = os.lstat(bp)
+        if b.st_size == st.st_size and b.st_mtime_ns == st.st_mtime_ns: return 0
+    except OSError: pass
+    return st.st_blocks * 512
+total = 0
+for r in rels:
+    p, bp = os.path.join(wt, r), os.path.join(base, r)
+    if os.path.isdir(p) and not os.path.islink(p):
+        for d, _, files in os.walk(p):
+            rel = os.path.relpath(d, p)
+            for f in files:
+                total += owned(os.path.join(d, f), os.path.join(bp, f) if rel == '.' else os.path.join(bp, rel, f))
+    else:
+        total += owned(p, bp)
+print(total)
+PY
+}
+
+cmd_clear() { # throw away a worktree's git-ignored files and re-clone them from the base; tracked files are never touched
+  [ $# -ge 1 ] || usage
+  local wt base dry="" untracked="" a
+  wt=$(cd "$1" && git rev-parse --show-toplevel) || die "$1 is not a git worktree"; shift
+  for a in "$@"; do case $a in --dry-run) dry=1 ;; --untracked) untracked=1 ;; *) usage ;; esac; done
+  base=$(wt_base "$wt")
+  [ "$wt" != "$base" ] || die "$wt is the base checkout; clear only resets worktrees"
+  local mode excl=() p rel
+  mode=$(backend "$base" "$wt")
+  [ "$mode" = copy ] && echo "cowtree: no clonefile/reflink here (filesystem or different volume); re-cloned files are full copies" >&2
+  while read -r p; do [ -n "$p" ] && excl+=("$p"); done < <(cfg_get_list "$base/$PROJECT_CFG" exclude; cfg_get_list "$GLOBAL_CFG" exclude)
+  skip() { case "${1%/}" in "$WT_CFG"|.cowtree|.cowtree/*|.git) return 0 ;; esac; case " ${excl[*]+"${excl[*]}"} " in *" ${1%%/*} "*) return 0 ;; esac; return 1; }
+  local ignored=() loose=() missing=()
+  while IFS= read -r -d '' p; do skip "$p" || ignored+=("${p%/}"); done < <(git -C "$wt" ls-files -z --others --ignored --exclude-standard --directory)
+  while IFS= read -r -d '' p; do skip "$p" || loose+=("${p%/}"); done < <(git -C "$wt" ls-files -z --others --exclude-standard --directory)
+  while IFS= read -r -d '' p; do
+    skip "$p" && continue; rel=${p%/}
+    [ -e "$wt/$rel" ] || [ -L "$wt/$rel" ] || missing+=("$rel")
+  done < <(git -C "$base" ls-files -z --others --ignored --exclude-standard --directory)
+  local reset=("${ignored[@]+"${ignored[@]}"}")
+  [ -n "$untracked" ] && reset+=("${loose[@]+"${loose[@]}"}")
+  local before freed=0
+  before=$(owned_bytes "$wt" "$base")
+  [ ${#reset[@]} -gt 0 ] && freed=$(owned_paths "$wt" "$base" "${reset[@]}")
+  local w=""; [ -n "$dry" ] && w="would "
+  for rel in "${reset[@]+"${reset[@]}"}"; do
+    if [ -e "$base/$rel" ] || [ -L "$base/$rel" ]; then echo "${w}reclone $rel"; else echo "${w}remove  $rel  (not in base)"; fi
+    [ -n "$dry" ] && continue
+    rm -rf "${wt:?}/$rel"
+    if [ -e "$base/$rel" ] || [ -L "$base/$rel" ]; then mkdir -p "$(dirname "$wt/$rel")"; cp_tree "$mode" "$base/$rel" "$(dirname "$wt/$rel")"; fi
+  done
+  for rel in "${missing[@]+"${missing[@]}"}"; do
+    echo "${w}add     $rel  (from base)"
+    [ -n "$dry" ] && continue
+    mkdir -p "$(dirname "$wt/$rel")"; cp_tree "$mode" "$base/$rel" "$(dirname "$wt/$rel")"
+  done
+  [ -z "$untracked" ] && for rel in "${loose[@]+"${loose[@]}"}"; do echo "keep    $rel  (untracked, not ignored; --untracked to reset it)"; done
+  if [ -n "$dry" ]; then
+    echo "owned $(human "$before"), would free about $(human "$freed")"
+  else
+    echo "owned $(human "$before") -> $(human "$(owned_bytes "$wt" "$base")")"
+  fi
+}
+
 cmd_adopt() { # link an existing plain git worktree to its base and dedupe it
   [ $# -ge 1 ] || usage
   local wt base branch common
@@ -453,6 +525,7 @@ case ${1:-} in
   status) shift; cmd_status "$@" ;;
   diff) shift; cmd_diff "$@" ;;
   dedupe) shift; cmd_dedupe "$@" ;;
+  clear|reset) shift; cmd_clear "$@" ;;
   workspace) shift; cmd_workspace "$@" ;;
   code) shift; cmd_code "$@" ;;
   init) shift; cmd_init "$@" ;;

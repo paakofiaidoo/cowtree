@@ -48,10 +48,10 @@ cowtree agent-install --project .       # add the cowtree rules to this repo's C
 
 - **Claude Code**: the repo is a plugin. `/plugin marketplace add paakofiaidoo/cowtree` then `/plugin install cowtree`,
   or `cowtree agent-install claude`, which links the skill into `~/.claude/skills`, the slash commands
-  `/cowtree-add`, `/cowtree-status`, `/cowtree-sweep` into `~/.claude/commands`, and registers the MCP server.
+  `/cowtree-add`, `/cowtree-status`, `/cowtree-clear`, `/cowtree-sweep` into `~/.claude/commands`, and registers the MCP server.
 - **MCP** (any MCP client: Codex, Cursor, Windsurf, Zed, Cline): `python3 <cowtree>/lib/mcp_server.py` over stdio,
   standard library only. Tools: `cowtree_add`, `cowtree_rm`, `cowtree_ls`, `cowtree_status`, `cowtree_diff`,
-  `cowtree_branches`, `cowtree_which`, `cowtree_adopt`, `cowtree_sweep`, `cowtree_config`.
+  `cowtree_branches`, `cowtree_which`, `cowtree_adopt`, `cowtree_clear`, `cowtree_sweep`, `cowtree_config`.
   ```json
   { "mcpServers": { "cowtree": { "command": "python3", "args": ["/Users/me/.cowtree/lib/mcp_server.py"] } } }
   ```
@@ -75,6 +75,7 @@ with `cowtree which`/`branches`, finish with `cowtree rm`, never plain `git work
 | `cowtree ls [<base>] \| --all` | Worktrees of one base, or every cowtree worktree under `wt_root`, with branch, logical size and bytes actually owned. |
 | `cowtree status [<worktree>]` | Base, branch, ahead/behind the base, uncommitted changes, owned bytes. |
 | `cowtree diff [<worktree>] [git-diff args]` | Diff of the worktree (committed + uncommitted) against the base's HEAD. |
+| `cowtree clear <worktree> [--dry-run] [--untracked]` | Reset a worktree's build files: every git-ignored path (`node_modules`, build dirs, caches, `.env` copies) is removed and re-cloned copy-on-write from the base, so it matches the base again and the blocks it owned are freed. Ignored paths the base does not have are removed; ignored paths only the base has are cloned in. Tracked files and their uncommitted edits are never touched. Untracked files that are not ignored may be new source, so they are listed and kept unless `--untracked` is given. Refuses to run on the base checkout. `--dry-run` prints the plan and the space it would free. Alias: `reset`. |
 | `cowtree dedupe <worktree> \| --all [--dry-run]` | Turn an existing plain worktree into a copy-on-write one: files byte-identical to the base become clones. Safe on dirty trees; modified files are left alone. |
 | `cowtree workspace <base> [--open]` | Write `<wt_root>/<repo>.code-workspace` listing the base and every worktree as VS Code folders. |
 | `cowtree code <worktree>` | Open the worktree in `editor`. |

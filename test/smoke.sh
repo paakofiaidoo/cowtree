@@ -57,6 +57,25 @@ grep -q "would remove $T/wt/base-plain" <<<"$("$CT" sweep "$T/base" --dry-run)" 
 grep -q "removed $T/wt/base-plain" <<<"$("$CT" sweep "$T/base")" || fail sweep
 [ ! -e "$T/wt/base-plain" ] || fail sweep-rm
 [ -z "$(git config --get branch.plain.cowtree)" ] || fail sweep-unlink
+# clear: ignored files go back to clones of the base's, tracked edits and plain untracked files stay
+echo dist >> "$(git rev-parse --git-common-dir)/info/exclude"
+echo junk >> "$W/build/out"; mkdir -p "$W/dist"; head -c 2000000 /dev/urandom > "$W/dist/bundle"; echo note > "$W/notes.txt"; echo more >> "$W/a.txt"
+mkdir -p build/new; echo fresh > build/new/x; rm -rf "$W/build/new"
+dry=$("$CT" clear "$W" --dry-run)
+grep -q "would reclone build" <<<"$dry" || fail "clear-dry: $dry"
+grep -q "would remove  dist" <<<"$dry" || fail clear-dry-remove
+grep -q "keep    notes.txt" <<<"$dry" || fail clear-dry-keep
+[ -d "$W/dist" ] || fail clear-dry-touched
+out=$("$CT" clear "$W")
+cmp -s "$W/build/out" build/out || fail "clear-reclone: $out"
+[ -f "$W/build/new/x" ] || fail clear-reclone-new
+[ ! -e "$W/dist" ] || fail clear-remove
+[ -f "$W/notes.txt" ] || fail clear-kept-untracked
+grep -q "more" "$W/a.txt" || fail clear-tracked-edit
+[ -f "$W/.cowtree.toml" ] || fail clear-link
+"$CT" clear "$W" --untracked >/dev/null; [ ! -e "$W/notes.txt" ] || fail clear-untracked
+"$CT" clear "$T/base" >/dev/null 2>&1 && fail clear-base
+git -C "$W" checkout -q -- a.txt
 grep -q "kept branch feat/topic" <<<"$("$CT" rm "$W")" || fail rm-kept
 [ ! -e "$W" ] || fail rm
 [ -z "$(git config --get branch.feat/topic.cowtree)" ] || fail rm-unlink
